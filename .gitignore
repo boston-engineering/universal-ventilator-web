@@ -8,3 +8,7 @@ demo
 /.tracecompass
 build/
 bin/
+
+# CLion Generated Files
+.idea/
+cmake-build-debug/
