@@ -1,9 +1,18 @@
-[submodule "lvgl"]
-	path = lvgl
+[submodule "application/lvgl"]
+	path = application/lvgl
 	url = https://github.com/lvgl/lvgl.git
-[submodule "lv_drivers"]
-	path = lv_drivers
-	url = https://github.com/lvgl/lv_drivers.git 
-[submodule "lv_demos"]
-	path = lv_demos
+[submodule "application/lv_drivers"]
+	path = application/lv_drivers
+	url = https://github.com/lvgl/lv_drivers.git
+[submodule "application/lv_demos"]
+	path = application/lv_demos
 	url = https://github.com/lvgl/lv_demos.git
+[submodule "webapp/lv_examples"]
+	path = webapp/lv_examples
+	url = https://github.com/lvgl/lv_examples.git
+[submodule "webapp/lv_drivers"]
+	path = webapp/lv_drivers
+	url = https://github.com/lvgl/lv_drivers.git
+[submodule "webapp/lvgl"]
+	path = webapp/lvgl
+	url = https://github.com/lvgl/lvgl.git

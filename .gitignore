@@ -1,14 +1,8 @@
-Debug/
-.settings/
-lv_dev_tools/
-**/*.o
-demo
-.pydevproject
-/.metadata/
-/.tracecompass
-build/
-bin/
+# CMake output
+build
+.vscode
 
-# CLion Generated Files
+# CLion
 .idea/
-cmake-build-debug/
+cmake-build-*
+cmbuild/

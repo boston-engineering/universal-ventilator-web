@@ -1,5 +1,5 @@
 #include "../layouts/layouts.h"
-#include <src/uvent_conf.h>
+#include "../../uvent_conf.h"
 #include "screen.h"
 
 MainScreen::MainScreen()

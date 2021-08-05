@@ -1,8 +1,8 @@
 #ifndef UVENT_LAYOUTS_H
 #define UVENT_LAYOUTS_H
 
-#include <src/controls/interface/interface.h>
-#include "src/display/main_display.h"
+#include "../../controls/interface/interface.h"
+#include "../main_display.h"
 #include <string>
 #include "lvgl/lvgl.h"
 
@@ -12,7 +12,8 @@ using std::string;
 /*              Defines and Macros              */
 /************************************************/
 
-LV_IMG_DECLARE(be_tm_tagline_logo);
+// LV_IMG_DECLARE(be_tm_tagline_logo);
+extern const lv_img_dsc_t be_tm_tagline_logo;
 
 typedef void (* ButtonCreateFunc)();
 typedef void (* ConfirmChoiceCb)(lv_event_t* evt);

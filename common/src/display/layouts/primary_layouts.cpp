@@ -1,6 +1,6 @@
-#include <src/uvent_conf.h>
-#include <src/controls/control.h>
-#include <src/utilities/util.h>
+#include "../../uvent_conf.h"
+#include "../../controls/control.h"
+#include "../../utilities/util.h"
 #include <cmath>
 #include "../main_display.h"
 #include "layouts.h"

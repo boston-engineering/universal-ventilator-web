@@ -21,7 +21,7 @@
 #include "lv_drivers/indev/mouse.h"
 #include "lv_drivers/indev/keyboard.h"
 #include "lv_drivers/indev/mousewheel.h"
-#include "src/uvent.h"
+#include "../common/src/uvent.h"
 
 /*********************
  *      DEFINES

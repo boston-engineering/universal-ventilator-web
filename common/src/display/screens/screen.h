@@ -2,7 +2,7 @@
 #define UVENT_SCREEN_H
 
 #include <lvgl/lvgl.h>
-#include <src/controls/interface/charts.h>
+#include "../../controls/interface/charts.h"
 
 #define MAIN_SCREEN_CHART_COUNT 2
 

@@ -6,6 +6,7 @@
  */
 
 #include <lvgl/src/hal/lv_hal_tick.h>
+#include <cstdio>
 #include "speaker.h"
 
 void Speaker::begin()

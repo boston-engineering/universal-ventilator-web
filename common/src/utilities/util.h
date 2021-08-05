@@ -2,8 +2,8 @@
 #define UVENT_UTIL_H
 
 #include <cstdint>
+#include "lvgl/lvgl.h"
 #include <lvgl/src/hal/lv_hal_tick.h>
-
 
 #define EPSILON 0.0000001
 

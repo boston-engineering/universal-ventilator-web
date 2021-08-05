@@ -1,4 +1,4 @@
-#include <src/display/main_display.h>
+#include "../../display/main_display.h"
 #include "interface.h"
 #include "../../uvent_conf.h"
 #include <algorithm>

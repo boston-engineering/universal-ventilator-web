@@ -1,13 +1,13 @@
 #include <random>
-#include <src/display/screens/screen.h>
-#include <src/utilities/util.h>
-#include <src/display/layouts/layouts.h>
 #include "control.h"
-#include "../uvent_conf.h"
-#include "../actuators/actuator.h"
+#include "waveform.h"
+#include "../display/screens/screen.h"
+#include "../utilities/util.h"
+#include "../display/layouts/layouts.h"
 #include "../eeprom/storage.h"
 #include "../sensors/pressure_sensor.h"
-#include "waveform.h"
+#include "../uvent_conf.h"
+#include "../actuators/actuator.h"
 #include "../alarm/alarm.h"
 
 // Instance to control the paddle

@@ -1,5 +1,5 @@
-#include <src/display/main_display.h>
-#include <src/utilities/util.h>
+#include "../../display/main_display.h"
+#include "../../utilities/util.h"
 #include "charts.h"
 
 SensorChart::SensorChart(const char* name, int32_t min_val, int32_t max_val, uint32_t chart_points,
