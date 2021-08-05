@@ -16,7 +16,7 @@ void init_adjustable_values();
  * Functionally should do the same thing as loop_update_readouts, but prints dummy values to the screen.
  * @param timer The LVGL timer that controls this loop. Contains user data with a screen pointer for the cur screen.
  */
-void loop_test_readout(lv_timer_t* timer);
+void loop_simulate_readouts(lv_timer_t* timer);
 /**
  * Timer function to poll sensors and update values accordingly.
  * This should not be called manually under normal circumstances
@@ -47,6 +47,9 @@ double get_readout(AdjValueType type);
  * @param new_value The new value to be set
  */
 void control_update_waveform_param(AdjValueType type, float new_value);
+
+void control_handler_cb();
+void actuator_handler_cb();
 
 void control_init();
 void control_service();

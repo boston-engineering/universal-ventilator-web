@@ -6,6 +6,8 @@
 #include <string>
 #include "lvgl/lvgl.h"
 
+using std::string;
+
 /************************************************/
 /*              Defines and Macros              */
 /************************************************/

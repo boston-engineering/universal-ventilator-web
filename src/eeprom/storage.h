@@ -29,11 +29,7 @@ struct __attribute__((packed)) uvent_settings {
 
 class Storage {
 public:
-    bool init();
-    bool is_crc_ok();
-    void load_defaults();
     void get_settings(uvent_settings&);
-    void set_settings(uvent_settings&);
     void display_storage();
 
 private:
@@ -54,7 +50,6 @@ private:
             .ie_ratio_right = DEF_IE,
     };
 
-    uint32_t crc_calculate();
 };
 
 #endif

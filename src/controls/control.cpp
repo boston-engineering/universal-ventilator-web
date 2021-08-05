@@ -1,3 +1,4 @@
+#include <random>
 #include <src/display/screens/screen.h>
 #include <src/utilities/util.h>
 #include <src/display/layouts/layouts.h>
@@ -37,7 +38,10 @@ Machine machine(States::ST_STARTUP, &actuator, &waveform, &alarm_manager, &cycle
 // Bool to keep track of the alert box
 static bool alert_box_already_visible = false;
 
-void loop_test_readout(lv_timer_t* timer)
+std::default_random_engine generator;
+std::uniform_int_distribution<int> distribution(0, 100);
+
+void loop_simulate_readouts(lv_timer_t* timer)
 {
 
     static bool timer_delay_complete = false;
@@ -79,11 +83,12 @@ void loop_test_readout(lv_timer_t* timer)
 
     // Poll gauge sensor, add point to graph and update readout obj.
     // Will not refresh until explicitly told
-    static double cur_pressure = -2;
+    static double cur_pressure = 0;
     screen->get_chart(CHART_IDX_PRESSURE)->add_data_point(cur_pressure);
     set_readout(AdjValueType::CUR_PRESSURE, cur_pressure);
     cur_pressure += 1;
-    cur_pressure += (rand() % 100) / 100.0;
+    double rand = (distribution(generator) / 100.0);
+    cur_pressure += rand;
     if (cur_pressure > 40) {
         cur_pressure -= 42;
     }
@@ -337,7 +342,7 @@ double get_readout(AdjValueType type)
     return *adjustable_values[type].get_value_measured();
 }
 
-void control_handler()
+void control_handler_cb()
 {
     static bool ledOn = false;
 
@@ -352,7 +357,7 @@ void control_handler()
  * The actuator, in this case a stepper is serviced periodically
  * to "step" the motor.
  */
-void actuator_handler()
+void actuator_handler_cb()
 {
     actuator.run();
 }
@@ -402,14 +407,14 @@ void control_init()
     /* Setup a timer and a function handler to run
      * the state machine.
      */
-    Timer0.attachInterrupt(control_handler);
-    Timer0.start(CONTROL_HANDLER_PERIOD_US);
+//    Timer0.attachInterrupt(control_handler);
+//    Timer0.start(CONTROL_HANDLER_PERIOD_US);
 
     /* Setup a timer and a function handler to run
      * the actuation.
      */
-    Timer1.attachInterrupt(actuator_handler);
-    Timer1.start(ACTUATOR_HANDLER_PERIOD_US);
+//    Timer1.attachInterrupt(actuator_handler);
+//    Timer1.start(ACTUATOR_HANDLER_PERIOD_US);
 
     // Check EEPROM CRC. Load defaults if CRC fails.
     if (!storage.is_crc_ok()) {
@@ -448,7 +453,7 @@ int8_t control_get_actuator_position_raw(double& angle)
  */
 void control_eeprom_write_default()
 {
-    storage.load_defaults();
+
 }
 
 /* Set the current angular position of the actuator as home
@@ -462,7 +467,6 @@ void control_zero_actuator_position()
     settings.actuator_home_offset_adc_counts = actuator.set_current_position_as_zero();
 
     // Store this value to the eeprom.
-    storage.set_settings(settings);
 }
 
 void control_write_ventilator_params()
@@ -478,7 +482,6 @@ void control_write_ventilator_params()
     settings.ie_ratio_left = get_control_target(IE_RATIO_LEFT);
     settings.ie_ratio_right = get_control_target(IE_RATIO_RIGHT);
 
-    storage.set_settings(settings);
 }
 
 void control_get_serial(char* serial_buffer)
@@ -520,11 +523,6 @@ const char** control_get_state_list(uint8_t* size)
 void control_display_storage()
 {
     storage.display_storage();
-}
-
-bool control_is_crc_ok()
-{
-    return storage.is_crc_ok();
 }
 
 double control_get_degrees_to_volume(C_Stat compliance)

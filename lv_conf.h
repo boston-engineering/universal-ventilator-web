@@ -186,11 +186,11 @@ e.g. "stm32f769xx.h" or "stm32f429xx.h"*/
  *-----------*/
 
 /*1: Show CPU usage and FPS count in the right bottom corner*/
-#define LV_USE_PERF_MONITOR     1
+#define LV_USE_PERF_MONITOR     0
 
 /*1: Show the used memory and the memory fragmentation  in the left bottom corner
  * Requires LV_MEM_CUSTOM = 0*/
-#define LV_USE_MEM_MONITOR      1
+#define LV_USE_MEM_MONITOR      0
 
 /*1: Draw random colored rectangles over the redrawn areas*/
 #define LV_USE_REFR_DEBUG       0
@@ -202,7 +202,7 @@ e.g. "stm32f769xx.h" or "stm32f429xx.h"*/
 #  define lv_snprintf     snprintf
 #  define lv_vsnprintf    vsnprintf
 #else   /*LV_SPRINTF_CUSTOM*/
-#  define LV_SPRINTF_USE_FLOAT 0
+#  define LV_SPRINTF_USE_FLOAT 1
 #endif  /*LV_SPRINTF_CUSTOM*/
 
 #define LV_USE_USER_DATA      1

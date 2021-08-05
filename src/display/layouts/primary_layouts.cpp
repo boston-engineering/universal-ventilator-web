@@ -185,7 +185,7 @@ void setup_adjustable_readout(AdjValueType type, lv_obj_t* parent_container, con
     if (settings.unit) {
         value_unit_label = lv_label_create(value_container);
         lv_obj_add_style(value_unit_label, STYLE_PTR_CM(READOUT_VALUE_UNIT_TEXT), LV_PART_MAIN);
-        lv_label_set_text_fmt(value_unit_label, settings.unit);
+        lv_label_set_text_fmt(value_unit_label, "%s", settings.unit);
     }
 
 #if DEBUG_BORDER_READOUTS
@@ -235,7 +235,7 @@ void setup_adjustable_control(AdjValueType type)
     const char* formatter = settings.target_formatter;
     // Make sure to cast if we're trying for an int
     if (strcmp("%d", formatter) == 0 || strcmp("%ld", formatter) == 0 || strcmp("%i", formatter) == 0) {
-        lv_label_set_text_fmt(value_label, formatter, (int32_t) *value_class->get_value_target());
+        lv_label_set_text_fmt(value_label, formatter, (long) *value_class->get_value_target());
     }
     else {
         lv_label_set_text_fmt(value_label, formatter, *value_class->get_value_target());
@@ -291,20 +291,20 @@ void setup_ie_readout()
     char buf_left[5];
     char buf_right[5];
     if (left <= READOUT_VALUE_NONE) {
-        lv_snprintf(buf_left, 5, "--");
+        snprintf(buf_left, 5, "--");
     }
     else {
-        lv_snprintf(buf_left, 5, left_format, is_whole(left) ? (int32_t) left : left);
+        snprintf(buf_left, 5, left_format, is_whole(left) ? (int32_t) left : left);
     }
 
     if (right <= READOUT_VALUE_NONE) {
-        lv_snprintf(buf_right, 5, "--");
+        snprintf(buf_right, 5, "--");
     }
     else {
-        lv_snprintf(buf_right, 5, right_format, is_whole(right) ? (int32_t) right : right);
+        snprintf(buf_right, 5, right_format, is_whole(right) ? (int32_t) right : right);
     }
 
-    lv_snprintf(ie_ratio, 12, "%s : %s", buf_left, buf_right);
+    snprintf(ie_ratio, 12, "%s : %s", buf_left, buf_right);
     setup_adjustable_readout(IE_RATIO_LEFT, ie_ratio);
 
     adjustable_values[IE_RATIO_LEFT].readout_update_cb = [](AdjustableValue* this_ptr, lv_event_t* evt) {
@@ -315,7 +315,7 @@ void setup_ie_readout()
 static void ie_label_text(lv_obj_t* label, double val)
 {
     if (is_whole(val)) {
-        lv_label_set_text_fmt(label, "%ld", (uint32_t) val);
+        lv_label_set_text_fmt(label, "%u", (uint32_t) val);
     }
     else {
         lv_label_set_text_fmt(label, "%.1f", val);
@@ -502,7 +502,7 @@ void set_alert_count_visual(uint16_t alert_count)
         return;
     }
 
-    lv_snprintf(buf, LABEL_BUF_SIZE, "%d ", alert_count);
+    snprintf(buf, LABEL_BUF_SIZE, "%d ", alert_count);
     lv_span_set_text(count, buf);
 }
 
@@ -542,11 +542,11 @@ void set_alert_text(string* messages, uint16_t count, uint16_t buf_size)
 
     for (uint16_t i = 0; i < count; i++) {
         string str = messages[i];
-        lv_snprintf((label_buffer + buffer_pos), (total_buffer_size - buffer_pos), "%s", str.c_str());
+        snprintf((label_buffer + buffer_pos), (total_buffer_size - buffer_pos), "%s", str.c_str());
         buffer_pos += str.length();
         // Add the spacer
         if (count > 1) {
-            lv_snprintf((label_buffer + buffer_pos), (total_buffer_size - buffer_pos), "%s", spacer);
+            snprintf((label_buffer + buffer_pos), (total_buffer_size - buffer_pos), "%s", spacer);
             buffer_pos += spacer_len;
         }
     }
@@ -642,7 +642,7 @@ lv_obj_t* add_settings_button(const char* title, lv_obj_t* parent)
     lv_obj_set_style_pad_bottom(button, 4 px, LV_PART_MAIN);
 
     lv_obj_t* label = lv_label_create(button);
-    lv_label_set_text_fmt(label, title);
+    lv_label_set_text_fmt(label, "%s", title);
     lv_obj_add_style(label, STYLE_PTR_CM(OPTION_BUTTON_TEXT), LV_PART_MAIN);
     lv_obj_align_to(label, button, LV_ALIGN_CENTER, 0, 0);
     lv_obj_center(label);
@@ -730,7 +730,7 @@ static void update_readout_labels(AdjustableValue* this_ptr, lv_obj_t* spangroup
 
         size_t spanlist_size = lv_spangroup_get_child_cnt(spangroup);
         // Get the int portion by default, we'll get the decimal portion later for float options
-        lv_snprintf(buf, LABEL_BUF_SIZE, "%ld", (int32_t) measured);
+        snprintf(buf, LABEL_BUF_SIZE, "%ld", (long) measured);
 
         if (spanlist_size < 1) {
             primary_span = lv_spangroup_new_span(spangroup);
@@ -751,14 +751,14 @@ static void update_readout_labels(AdjustableValue* this_ptr, lv_obj_t* spangroup
             lv_span_t* decimal_span;
             double decimal_portion = 0;
             if (measured != 0) {
-                decimal_portion = measured - ((int32_t) measured);
+                decimal_portion = measured - ((long) measured);
                 if (decimal_portion < 0) {
                     decimal_portion *= -1;
                 }
             }
 
             memset(buf, '\0', LABEL_BUF_SIZE);
-            lv_snprintf(buf, LABEL_BUF_SIZE, "%.2f", (float) decimal_portion);
+            snprintf(buf, LABEL_BUF_SIZE, "%.2f", (float) decimal_portion);
 
             if (spanlist_size == 1) {
                 decimal_span = lv_spangroup_new_span(spangroup);
@@ -859,7 +859,7 @@ static void update_normal_label(AdjustableValue* this_ptr)
     const char* formatter = settings.target_formatter;
     // Make sure to cast if we're trying for an int
     if (strcmp("%d", formatter) == 0 || strcmp("%ld", formatter) == 0 || strcmp("%i", formatter) == 0) {
-        lv_label_set_text_fmt(quantity_label, formatter, (int32_t) *this_ptr->get_value_target());
+        lv_label_set_text_fmt(quantity_label, formatter, (long) *this_ptr->get_value_target());
     }
     else {
         lv_label_set_text_fmt(quantity_label, formatter, *this_ptr->get_value_target());
@@ -874,7 +874,7 @@ static void update_ie_control_label(AdjustableValue* this_ptr)
     double val = *this_ptr->get_value_target();
 
     if (is_whole(val)) {
-        lv_label_set_text_fmt(selected_label, "%ld", (int32_t) val);
+        lv_label_set_text_fmt(selected_label, "%ld", (long) val);
     }
     else {
         lv_label_set_text_fmt(selected_label, "%.1f", val);

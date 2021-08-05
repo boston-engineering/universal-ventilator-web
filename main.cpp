@@ -16,8 +16,6 @@
 
 #include <SDL2/SDL.h>
 #include "lvgl/lvgl.h"
-#include "lvgl/examples/lv_examples.h"
-#include "lv_demos/lv_demo.h"
 #include "lv_drivers/display/monitor.h"
 #include "lv_drivers/display/fbdev.h"
 #include "lv_drivers/indev/mouse.h"
@@ -112,15 +110,15 @@ int main(int argc, char **argv) {
  * Initialize the Hardware Abstraction Layer (HAL) for the LVGL graphics
  * library
  */
-static void hal_init(void) {
+static void hal_init() {
     /* Use the 'monitor' driver which creates window on PC's monitor to simulate a display*/
     monitor_init();
     /* Tick init.
      * You have to call 'lv_tick_inc()' in periodically to inform LittelvGL about
      * how much time were elapsed Create an SDL thread to do this*/
-    SDL_CreateThread(tick_thread, "tick", NULL);
-    SDL_CreateThread(control_us_timer, "control_timer", NULL);
-    SDL_CreateThread(actuator_us_timer, "actuator_timer", NULL);
+    SDL_CreateThread(tick_thread, "tick", nullptr);
+    SDL_CreateThread(control_us_timer, "control_timer", nullptr);
+    SDL_CreateThread(actuator_us_timer, "actuator_timer", nullptr);
 
     /*Create a display buffer*/
     static lv_disp_draw_buf_t disp_buf1;
@@ -215,6 +213,7 @@ static int control_us_timer(void *data) {
 
     while (true) {
         nanosleep(&nano_timespec, nullptr);
+        control_handler_cb();
     }
 
     return 0;
@@ -230,6 +229,7 @@ static int actuator_us_timer(void *data) {
 
     while (true) {
         nanosleep(&nano_timespec, nullptr);
+        actuator_handler_cb();
     }
 
     return 0;

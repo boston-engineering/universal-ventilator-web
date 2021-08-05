@@ -48,3 +48,17 @@ bool Waveform::is_peep_pause_done()
 {
     return ((now_s() - params.tCycleTimer) > (params.tEx + MIN_PEEP_PAUSE));
 }
+
+void Waveform::display_details() const
+{
+    printf("----Waveform Details----\n");
+    printf("tPeriod:\t %0.2f\n", params.tPeriod);
+    printf("tHoldIn:\t %0.2f\n", params.tHoldIn);
+    printf("tIn:\t\t %0.2f\n", params.tIn);
+    printf("tEx:\t\t %0.2f\n", params.tEx);
+    printf("bpm:\t\t %d\n", params.bpm);
+    printf("ie:\t\t %0.1f:%0.1f\n", params.ie_i, params.ie_e);
+    printf("Vt:\t\t %0.1f\n", params.volume_ml);
+    printf("pip:\t\t %d\n", params.pip);
+    printf("peep:\t\t %d\n", params.peep);
+}

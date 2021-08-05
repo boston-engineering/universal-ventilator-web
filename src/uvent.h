@@ -5,7 +5,6 @@
 #include "uvent_conf.h"
 #include "controls/control.h"
 #include "sensors/pressure_sensor.h"
-#include "sensors/test_pressure_sensors.h"
 #include "display/main_display.h"
 
 extern MainScreen main_screen;
