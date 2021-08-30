@@ -26,6 +26,7 @@ lv_obj_t* open_option_dialog(const char* title, bool enable_close_button = false
 
 // Main Screen
 void setup_readouts();
+void setup_extra_readouts();
 void setup_controls();
 void setup_buttons();
 void setup_visual_2();

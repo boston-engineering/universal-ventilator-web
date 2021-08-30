@@ -190,6 +190,14 @@
 #define PLATEAU_MAX 800
 #define DEF_PLATEAU 200// Default
 
+// Flow
+#define FLOW_MIN 0
+#define FLOW_MAX 180
+
+// Pressure
+#define PRESSURE_MIN 0
+#define PRESSURE_MAX 40
+
 // The 'None' value for a readout.
 // Setting any adjustable value to this constant (or below) will force the label to show "--" as the value
 // Set below your lowest known value, within the range of `double`

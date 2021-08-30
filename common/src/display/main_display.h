@@ -113,6 +113,7 @@ typedef enum ComponentType {
     CHART_HOLDER,                   /**< Holder for all the charts in VISUAL_AREA_2*/
     ALERT_BOX,                      /**< Box that holds alert messages` */
     SPACER,                         /**< Spacer to take up room in flex box containers */
+    READOUT_EXTRA,
     BLANK __attribute__((unused)),
     COMPONENT_COUNT,
 } ComponentType;
@@ -235,6 +236,7 @@ static inline void setup_styles()
     STYLE_DECL(CHART_HOLDER);
     STYLE_DECL(ALERT_BOX);
     STYLE_DECL(SPACER);
+    STYLE_DECL(READOUT_EXTRA);
 }
 
 #endif //UVENT_MAIN_DISPLAY_H

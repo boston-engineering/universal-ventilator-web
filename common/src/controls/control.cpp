@@ -86,6 +86,7 @@ void loop_simulate_readouts(lv_timer_t* timer)
     static double cur_pressure = 0;
     screen->get_chart(CHART_IDX_PRESSURE)->add_data_point(cur_pressure);
     set_readout(AdjValueType::CUR_PRESSURE, cur_pressure);
+    set_readout(AdjValueType::FLOW, cur_pressure);
     cur_pressure += 1;
     double rand = (distribution(generator) / 100.0);
     cur_pressure += rand;
