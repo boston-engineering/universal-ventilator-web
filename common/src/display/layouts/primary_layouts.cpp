@@ -295,38 +295,50 @@ void setup_adjustable_control(AdjValueType type)
 #endif
 }
 
-void setup_ie_readout()
-{
-    char ie_ratio[12];
+void get_ie_readout_text_buf(char* output_buf) {
     double left = get_readout(AdjValueType::IE_RATIO_LEFT);
     double right = get_readout(AdjValueType::IE_RATIO_RIGHT);
-    const char* left_format = is_whole(left) ? "%ld" : "%.1f";
-    const char* right_format = is_whole(right) ? "%ld" : "%.1f";
     char buf_left[5];
     char buf_right[5];
     if (left <= READOUT_VALUE_NONE) {
-        snprintf(buf_left, 5, "--");
+        lv_snprintf(buf_left, 5, "--");
     }
     else {
-        snprintf(buf_left, 5, left_format, is_whole(left) ? (int32_t) left : left);
+        if(is_whole(left)) {
+            lv_snprintf(buf_left, 5, "%ld", (int32_t) left);
+        } else {
+            lv_snprintf(buf_left, 5, "%.1f", left);
+        }
     }
 
     if (right <= READOUT_VALUE_NONE) {
-        snprintf(buf_right, 5, "--");
+        lv_snprintf(buf_right, 5, "--");
     }
     else {
-        snprintf(buf_right, 5, right_format, is_whole(right) ? (int32_t) right : right);
+        if(is_whole(right)) {
+            lv_snprintf(buf_right, 5, "%ld", (int32_t) right);
+        } else {
+            lv_snprintf(buf_right, 5, "%.1f", right);
+        }
     }
 
-    snprintf(ie_ratio, 12, "%s : %s", buf_left, buf_right);
-    setup_adjustable_readout(IE_RATIO_LEFT, ie_ratio);
-
-    adjustable_values[IE_RATIO_LEFT].readout_update_cb = [](AdjustableValue* this_ptr, lv_event_t* evt) {
-
-    };
+    lv_snprintf(output_buf, 12, "%s : %s", buf_left, buf_right);
 }
 
-static void ie_label_text(lv_obj_t* label, double val)
+void setup_ie_readout()
+{
+    char ie_ratio[12];
+    get_ie_readout_text_buf(ie_ratio);
+    setup_adjustable_readout(IE_RATIO_LEFT, ie_ratio);
+
+    lv_obj_t* target = adjustable_values[IE_RATIO_LEFT].get_obj_measured();
+    lv_obj_t* value_container = lv_obj_get_child(target, 1);
+    lv_obj_t* value_amount_spangroup = lv_obj_get_child(value_container, 0);
+    lv_span_t* span = lv_spangroup_get_child(value_amount_spangroup, 0);
+    lv_style_set_text_font(&span->style, &lv_font_montserrat_26);
+}
+
+static void ie_control_label_text(lv_obj_t* label, double val)
 {
     if (is_whole(val)) {
         lv_label_set_text_fmt(label, "%u", (uint32_t) val);
@@ -402,9 +414,9 @@ void setup_ie_controls()
     double left_val = *left_class->get_value_target();
     double right_val = *right_class->get_value_target();
 
-    ie_label_text(value_label_left, left_val);
+    ie_control_label_text(value_label_left, left_val);
     lv_label_set_text_fmt(value_label_divider, ":");
-    ie_label_text(value_label_right, right_val);
+    ie_control_label_text(value_label_right, right_val);
 
     lv_obj_t* name_label = lv_label_create(text_container);
     lv_obj_set_width(name_label, LV_PCT(100));
@@ -791,6 +803,19 @@ static void update_readout_labels(AdjustableValue* this_ptr, lv_obj_t* spangroup
     lv_spangroup_refr_mode(spangroup);
 }
 
+static void update_ie_readout(AdjustableValue* this_ptr, lv_obj_t* spangroup) {
+    if(!(this_ptr->value_type == IE_RATIO_LEFT || this_ptr->value_type == IE_RATIO_RIGHT)) {
+        return;
+    }
+    lv_span_t* span = lv_spangroup_get_child(spangroup, 0);
+    char ie_buf[12];
+    if(!span) {
+        span = lv_spangroup_new_span(spangroup);
+    }
+    get_ie_readout_text_buf(ie_buf);
+    lv_span_set_text(span, ie_buf);
+}
+
 static void readout_update_cb(AdjustableValue* this_ptr, lv_event_t* evt)
 {
     if (evt->code != LV_EVENT_REFRESH) {
@@ -805,8 +830,12 @@ static void readout_update_cb(AdjustableValue* this_ptr, lv_event_t* evt)
         return;
     }
 
-    update_readout_labels(this_ptr, value_amount_spangroup);
-    //    printMem();
+    if(this_ptr->value_type == IE_RATIO_LEFT || this_ptr->value_type == IE_RATIO_RIGHT) {
+        update_ie_readout(this_ptr, value_amount_spangroup);
+    } else {
+        update_readout_labels(this_ptr, value_amount_spangroup);
+        //    printMem();
+    }
 }
 
 /************************************************/

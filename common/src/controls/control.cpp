@@ -109,6 +109,8 @@ void loop_simulate_readouts(lv_timer_t* timer)
 
     set_readout(PEEP, 30);
     set_readout(PIP, 30);
+    set_readout(IE_RATIO_LEFT, 1.2);
+    set_readout(IE_RATIO_RIGHT, 2.0);
 
     // Check to see if it's time to refresh the readout boxes
     if (has_time_elapsed(&last_readout_refresh, READOUT_REFRESH_INTERVAL)) {
