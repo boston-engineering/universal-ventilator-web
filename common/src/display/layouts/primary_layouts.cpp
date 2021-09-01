@@ -42,7 +42,7 @@ void setup_readouts()
     lv_obj_t* parent = SCR_C(VISUAL_AREA_1);
     lv_obj_clean(parent);
 
-    setup_adjustable_readout(TIDAL_VOLUME);
+    // setup_adjustable_readout(TIDAL_VOLUME);
     setup_adjustable_readout(RESPIRATION_RATE);
 
     setup_ie_readout();
@@ -50,14 +50,7 @@ void setup_readouts()
     setup_adjustable_readout(PEEP);
     setup_adjustable_readout(PIP);
     setup_adjustable_readout(CUR_PRESSURE);
-}
-
-void setup_extra_readouts() {
-    lv_obj_t* visual_2 = SCR_C(VISUAL_AREA_2);
-    lv_obj_t* spacer = lv_obj_get_child(visual_2, 1);
-
-    setup_adjustable_readout(FLOW, lv_obj_get_child(spacer, 0));
-    setup_adjustable_readout(PRES, lv_obj_get_child(spacer, 1));
+    setup_adjustable_readout(FLOW);
 }
 
 void setup_controls()
@@ -651,12 +644,31 @@ void add_mute_button()
     );
 }
 
+lv_obj_t* get_start_button()
+{
+    lv_obj_t* visual_3 = SCR_C(VISUAL_AREA_3);
+    if(!visual_3) {
+        return nullptr;
+    }
+    return lv_obj_get_child(visual_3, 0);
+}
+
 lv_obj_t* get_mute_button()
 {
     lv_obj_t* visual_3 = SCR_C(VISUAL_AREA_3);
-    lv_obj_t* button = lv_obj_get_child(visual_3, 1);
+    if(!visual_3) {
+        return nullptr;
+    }
+    return lv_obj_get_child(visual_3, 1);
+}
 
-    return button;
+lv_obj_t* get_settings_config_button() {
+    lv_obj_t* settings_button_container = SCR_C(CONTROL_AREA_2);
+    if(!settings_button_container) {
+        return nullptr;
+    }
+    lv_obj_t* settings_button = lv_obj_get_child(settings_button_container, 0);
+    return settings_button;
 }
 
 lv_obj_t* add_settings_button(const char* title, lv_obj_t* parent)

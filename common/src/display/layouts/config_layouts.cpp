@@ -283,6 +283,11 @@ static void close_floating_window(lv_obj_t* window)
 
     LV_LOG_TRACE("Closing option dialog...");
     lv_obj_del(window);
+
+    lv_obj_t* settings_btn = get_settings_config_button();
+    if(settings_btn) {
+        lv_obj_clear_state(settings_btn, LV_STATE_DISABLED);
+    }
 }
 
 static void close_floating_window_evt_cb(lv_event_t* evt)
@@ -548,6 +553,10 @@ lv_obj_t* open_option_dialog(const char* title, bool enable_close_button)
 
     lv_obj_align_to(window, lv_scr_act(), LV_ALIGN_CENTER, 0, 0);
     active_floating_window = window;
+    lv_obj_t* settings_btn = get_settings_config_button();
+    if(settings_btn) {
+        lv_obj_add_state(settings_btn, LV_STATE_DISABLED);
+    }
     return window;
 }
 

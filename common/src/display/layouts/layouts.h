@@ -26,7 +26,6 @@ lv_obj_t* open_option_dialog(const char* title, bool enable_close_button = false
 
 // Main Screen
 void setup_readouts();
-void setup_extra_readouts();
 void setup_controls();
 void setup_buttons();
 void setup_visual_2();
@@ -58,7 +57,9 @@ void set_alert_text(std::string* messages, uint16_t count, uint16_t buf_size);
 // Button functions
 void add_start_button();
 void add_mute_button();
+lv_obj_t* get_start_button();
 lv_obj_t* get_mute_button();
+lv_obj_t* get_settings_config_button();
 lv_obj_t* add_settings_button(const char* title, lv_obj_t* parent = SCR_C(CONTROL_AREA_2));
 lv_obj_t* add_settings_toggle_button(const char* title, lv_obj_t* parent = SCR_C(CONTROL_AREA_2));
 

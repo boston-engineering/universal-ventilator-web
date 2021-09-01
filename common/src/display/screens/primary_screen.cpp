@@ -6,18 +6,7 @@ MainScreen::MainScreen()
         : Screen()
 {
     charts[0] = SensorChart(
-            "Gauge Pressure",
-            GAUGE_PRESSURE_CHART_MIN_VALUE,
-            GAUGE_PRESSURE_CHART_MAX_VALUE,
-            GAUGE_PRESSURE_CHART_MAX_POINTS,
-            GAUGE_PRESSURE_CHART_REFRESH_TIME,
-            GAUGE_PRESSURE_CHART_LINE_MODE,
-            GAUGE_PRESSURE_CHART_DOT_SIZE,
-            GAUGE_PRESSURE_CHART_LINE_WIDTH
-    );
-
-    charts[1] = SensorChart(
-            "Tidal Volume",
+            "Tidal Volume (mL)",
             VT_CHART_MIN_VALUE,
             VT_CHART_MAX_VALUE,
             VT_CHART_MAX_POINTS,
@@ -25,6 +14,17 @@ MainScreen::MainScreen()
             VT_CHART_LINE_MODE,
             VT_CHART_DOT_SIZE,
             VT_CHART_LINE_WIDTH
+    );
+
+    charts[1] = SensorChart(
+            "Gauge Pressure (cmH2O)",
+            GAUGE_PRESSURE_CHART_MIN_VALUE,
+            GAUGE_PRESSURE_CHART_MAX_VALUE,
+            GAUGE_PRESSURE_CHART_MAX_POINTS,
+            GAUGE_PRESSURE_CHART_REFRESH_TIME,
+            GAUGE_PRESSURE_CHART_LINE_MODE,
+            GAUGE_PRESSURE_CHART_DOT_SIZE,
+            GAUGE_PRESSURE_CHART_LINE_WIDTH
     );
 }
 
@@ -50,7 +50,6 @@ void MainScreen::setup()
 
     // VISUAL_AREA_2
     setup_visual_2();
-    setup_extra_readouts();
     generate_charts();
 
     setup_buttons();
@@ -65,8 +64,10 @@ void MainScreen::attach_settings_cb()
 
     if (settings_button) {
         auto on_settings_check = [](lv_event_t* evt) {
+
             lv_obj_t* target = lv_event_get_target(evt);
             lv_state_t state = lv_obj_get_state(target);
+
             if (!lv_obj_has_flag(target, LV_OBJ_FLAG_CHECKABLE)) {
                 return;
             }
@@ -75,9 +76,27 @@ void MainScreen::attach_settings_cb()
 
             if ((state & LV_STATE_CHECKED) != 0) {
                 screen_ptr->open_config();
+                lv_obj_t* start = get_start_button();
+                lv_obj_t* mute = get_mute_button();
+
+                if(start) {
+                    lv_obj_add_state(start, LV_STATE_DISABLED);
+                }
+                if(mute) {
+                    lv_obj_add_state(mute, LV_STATE_DISABLED);
+                }
             }
             else {
                 setup_controls();
+                lv_obj_t* start = get_start_button();
+                lv_obj_t* mute = get_mute_button();
+
+                if(start) {
+                    lv_obj_clear_state(start, LV_STATE_DISABLED);
+                }
+                if(mute) {
+                    lv_obj_clear_state(mute, LV_STATE_DISABLED);
+                }
             }
         };
 
@@ -95,8 +114,8 @@ void MainScreen::generate_charts()
     lv_obj_t* screen_container = SCR_C(VISUAL_AREA_2);
     lv_obj_t* chart_container = lv_obj_get_child(screen_container, 0);
 
-    charts[0].generate_chart(chart_container);
-    charts[1].generate_chart(chart_container);
+    charts[0].generate_chart(chart_container, TIDAL_VOLUME);
+    charts[1].generate_chart(chart_container, PRES);
 }
 
 const SensorChart* MainScreen::get_chart(uint8_t idx)

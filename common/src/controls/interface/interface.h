@@ -3,8 +3,8 @@
 
 #include <lvgl/lvgl.h>
 
-#define CHART_IDX_PRESSURE 0
-#define CHART_IDX_VT 1
+#define CHART_IDX_VT 0
+#define CHART_IDX_PRESSURE 1
 
 typedef enum AdjValueType {
     TIDAL_VOLUME = 0,

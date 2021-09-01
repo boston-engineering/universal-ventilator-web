@@ -2,6 +2,7 @@
 #define UVENT_CHARTS_H
 
 #include <lvgl/lvgl.h>
+#include "interface.h"
 
 /**
  * Chart that gets its data from a polled sensor
@@ -27,7 +28,7 @@ struct SensorChart {
      *
      * @param parent The parent this chart should be added to
      */
-    void generate_chart(lv_obj_t* parent);
+    void generate_chart(lv_obj_t* parent, AdjValueType tracked_type);
     void add_data_point(double data) const;
     /**
      * @return If enough time has passed to allow a refresh of the chart screen
