@@ -55,6 +55,8 @@ void set_alert_count_visual(uint16_t alert_count);
 void set_alert_text(const char* message);
 void set_alert_text(std::string* messages, uint16_t count, uint16_t buf_size);
 // Button functions
+void disable_start_button();
+void enable_start_button();
 void add_start_button();
 void add_mute_button();
 lv_obj_t* get_start_button();

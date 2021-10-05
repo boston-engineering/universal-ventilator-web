@@ -42,7 +42,7 @@ void setup_readouts()
     lv_obj_t* parent = SCR_C(VISUAL_AREA_1);
     lv_obj_clean(parent);
 
-    // setup_adjustable_readout(TIDAL_VOLUME);
+    setup_adjustable_readout(TIDAL_VOLUME);
     setup_adjustable_readout(RESPIRATION_RATE);
 
     setup_ie_readout();
@@ -50,7 +50,6 @@ void setup_readouts()
     setup_adjustable_readout(PEEP);
     setup_adjustable_readout(PIP);
     setup_adjustable_readout(CUR_PRESSURE);
-    setup_adjustable_readout(FLOW);
 }
 
 void setup_controls()
@@ -99,12 +98,6 @@ void setup_visual_2()
 
     lv_obj_t* spacer = lv_obj_create(visual_area_2);
     lv_obj_add_style(spacer, STYLE_PTR_CM(SPACER), LV_PART_MAIN);
-
-    lv_obj_t* extra_readout_1 = lv_obj_create(spacer);
-    lv_obj_add_style(extra_readout_1, STYLE_PTR_CM(READOUT_EXTRA), LV_PART_MAIN);
-
-    lv_obj_t* extra_readout_2 = lv_obj_create(spacer);
-    lv_obj_add_style(extra_readout_2, STYLE_PTR_CM(READOUT_EXTRA), LV_PART_MAIN);
 
     setup_alert_box();
 }
@@ -576,6 +569,22 @@ void set_alert_text(string* messages, uint16_t count, uint16_t buf_size)
 /************************************************/
 /*          Functions to generate buttons       */
 /************************************************/
+
+void disable_start_button() {
+    lv_obj_t* btn = get_start_button();
+    if(!btn) {
+        return;
+    }
+    lv_obj_add_state(btn, LV_STATE_DISABLED);
+}
+
+void enable_start_button() {
+    lv_obj_t* btn = get_start_button();
+    if(!btn) {
+        return;
+    }
+    lv_obj_clear_state(btn, LV_STATE_DISABLED);
+}
 
 void add_start_button()
 {

@@ -2,6 +2,7 @@
 #include "machine.h"
 #include "../actuators/actuator.h"
 #include "../utilities/util.h"
+#include "../display/layouts/layouts.h"
 
 // Stringify states
 const char* state_string[] =
@@ -164,6 +165,7 @@ void Machine::state_actuator_home()
             // Let the motor driver know that this is 0 position
             p_actuator->set_position_as_home();
 
+            enable_start_button();
             set_state(States::ST_OFF);
         }
         else {
@@ -179,6 +181,7 @@ void Machine::state_actuator_home()
         // Let the motor driver know that this is 0 position
         p_actuator->set_position_as_home();
 
+        enable_start_button();
         set_state(States::ST_OFF);
     }
     else {
@@ -193,6 +196,7 @@ void Machine::state_actuator_home()
             if ((is_home == false) && (p_actuator->is_moving() == false)) {
                 // Set the fault ID:
                 fault_id = Fault::FT_ACTUATOR_FAULT;
+                enable_start_button();
                 // Actuator is not moving. Switch to error state
                 set_state(States::ST_FAULT);
             }

@@ -87,6 +87,7 @@ void loop_simulate_readouts(lv_timer_t* timer)
     screen->get_chart(CHART_IDX_PRESSURE)->add_data_point(cur_pressure);
     set_readout(AdjValueType::CUR_PRESSURE, cur_pressure);
     set_readout(AdjValueType::PRES, cur_pressure);
+    screen->get_chart(CHART_IDX_FLOW)->add_data_point(cur_pressure);
     set_readout(AdjValueType::FLOW, cur_pressure);
     cur_pressure += 1;
     double rand = (distribution(generator) / 100.0);
@@ -99,7 +100,6 @@ void loop_simulate_readouts(lv_timer_t* timer)
     // Will not refresh until explicitly told
     static int16_t test2 = 0;
     double cur_tidal_volume = test2;
-    screen->get_chart(CHART_IDX_VT)->add_data_point(cur_tidal_volume);
     set_readout(AdjValueType::TIDAL_VOLUME, cur_tidal_volume);
     test2 += 50;
     if (test2 > 1000) {
@@ -165,10 +165,9 @@ void loop_update_readouts(lv_timer_t* timer)
     screen->get_chart(CHART_IDX_PRESSURE)->add_data_point(cur_pressure);
     set_readout(AdjValueType::CUR_PRESSURE, cur_pressure);
 
-    // Poll vT sensor, add point to graph and update readout obj.
+    // Poll vT sensor, update readout obj.
     // Will not refresh until explicitly told
     double cur_tidal_volume = control_get_degrees_to_volume_ml();
-    screen->get_chart(CHART_IDX_VT)->add_data_point(cur_tidal_volume);
     set_readout(AdjValueType::TIDAL_VOLUME, cur_tidal_volume);
 
     // TODO add more sensors HERE

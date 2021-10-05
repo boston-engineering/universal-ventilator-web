@@ -1,3 +1,4 @@
+#include <cstdio>
 #include "../../display/main_display.h"
 #include "../../utilities/util.h"
 #include "charts.h"
@@ -57,6 +58,7 @@ void SensorChart::generate_chart(lv_obj_t *parent, AdjValueType tracked_type = U
     lv_chart_add_series(chart, lv_palette_main(LV_PALETTE_GREEN), LV_CHART_AXIS_PRIMARY_Y);
     lv_chart_set_point_count(chart, chart_points);
     lv_chart_set_update_mode(chart, LV_CHART_UPDATE_MODE_SHIFT);
+    lv_chart_set_div_line_count(chart, 0, 11); /*Divide the graph area into 10(11 lines) equal parts*/
 
     lv_obj_t *readout_label = lv_label_create(chart);
     lv_obj_set_style_text_font(readout_label, &lv_font_montserrat_22, LV_PART_MAIN);
@@ -75,8 +77,9 @@ void SensorChart::add_data_point(double data) const {
         return;
     }
     lv_chart_series_t *series = lv_chart_get_series_next(chart, nullptr);
-
-    lv_chart_set_next_value(chart, series, data);
+    uint16_t point_count = lv_chart_get_point_count(chart);
+    series->y_points[series->start_point] = data;
+    series->start_point = (series->start_point + 1) % point_count;
 }
 
 bool SensorChart::should_refresh() {
@@ -87,5 +90,6 @@ void SensorChart::refresh_chart() const {
     if (!chart) {
         return;
     }
+    printf("%u\n", last_refreshed);
     lv_chart_refresh(chart);
 }
