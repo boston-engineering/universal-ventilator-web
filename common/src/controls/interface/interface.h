@@ -2,9 +2,10 @@
 #define UVENT_INTERFACE_H
 
 #include <lvgl/lvgl.h>
+#include "../../display/main_display.h"
 
-#define CHART_IDX_PRESSURE 0
-#define CHART_IDX_FLOW 1
+#define CHART_IDX_FLOW 0
+#define CHART_IDX_PRESSURE 1
 
 typedef enum AdjValueType {
     TIDAL_VOLUME = 0,
@@ -12,11 +13,11 @@ typedef enum AdjValueType {
     PEEP,
     PIP,
     PLATEAU_TIME,
-    CUR_PRESSURE,
+    PLAT_PRESSURE,
     IE_RATIO_LEFT,
     IE_RATIO_RIGHT,
     FLOW,
-    PRES,
+    CUR_PRESSURE,
     ADJ_VALUE_COUNT,
     UNKNOWN,
 } AdjValueType;

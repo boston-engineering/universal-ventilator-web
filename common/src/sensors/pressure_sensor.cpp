@@ -10,8 +10,8 @@ PressureSensor::PressureSensor(int analog_pin, double max_psi, double min_psi, i
 void PressureSensor::init(double max_psi, double min_psi, int resistance_ohms_1, int resistance_ohms_2, int32_t pressure_offset_adc_counts)
 {
     // Set resolution to 12 bits, the default is 10
-
-    int max_resolution_units = 1;
+    analogReadResolution(ADC_RESOLUTION);
+    int max_resolution_units = pow(2, ADC_RESOLUTION);
     diff_zero_resolution = max_resolution_units / 2;
 
     // Calculate voltage step for voltage through circuit and across the resistors
@@ -37,13 +37,13 @@ double PressureSensor::get_pressure(Units_pressure units, bool zero)
 
     // Get analog value, if after zeroing the value is less than 0 then set to zero.
     if (zero) {
-        analog_val = 0 - offset_adc_counts;
+        analog_val = analogRead(analog_pin) - offset_adc_counts;
         if (analog_val < 0) {
             analog_val = 0;
         }
     }
     else {
-        analog_val = 0;
+        analog_val = analogRead(analog_pin);
     }
 
     // Calculate pressure from constants in the constructor
@@ -77,7 +77,8 @@ double PressureSensor::get_flow(Units_flow units, bool zero, Order_type order)
         determine_units_flow(flow, units);
     }
 
-    return flow;
+    // Reverse the flow, due to tubing layout. Blue line goes closest to patient.
+    return (-1.0)*flow;
 }
 
 void PressureSensor::reset_zero(int32_t& pressure_offset_adc_counts)
@@ -91,7 +92,7 @@ void PressureSensor::calculate_zero(int32_t& pressure_offset_adc_counts, Zero_ty
 
     if (zero_type != Zero_type::DONT_ZERO) {
         for (int i = 0; i < average_samples; i++) {
-            offset_adc_counts += 0;
+            offset_adc_counts += analogRead(analog_pin);
         }
 
         offset_adc_counts /= average_samples;

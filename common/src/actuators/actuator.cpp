@@ -3,6 +3,9 @@
 
 void Actuator::init()
 {
+#if USE_AMS_FEEDBACK
+    stepper_fb.begin();
+#endif
     stepper.init();
 
     // Enable the drive
@@ -88,7 +91,7 @@ bool Actuator::is_home()
     // double current_position = stepper.get_position();
     double current_position = get_position();
 
-    /* Allow a degree of dither to detect home.
+/* Allow a degree of dither to detect home.
      * The stepper motor is setup to perform full steps.
      * The teeth ratio is 60/14, which is 1:4.29
      * which means, 4.29 revs of the stepper is 1 rev of the main wheel.
@@ -96,7 +99,13 @@ bool Actuator::is_home()
      * = 0.419~0.42 degrees on the wobbler shaft.
      * Check within a degree while homing.
      */
+#if USE_AMS_FEEDBACK
+    // The feedback sensor has a dither and sometimes rolls over. Add a forward band.
     return (((current_position >= 0.2) && (current_position <= 1.0)));
+#else
+    // For no feedback, the stepper steps are counted and does not roll over.
+    return (((current_position >= 0.0) && (current_position <= 1.0)));
+#endif
 }
 
 bool Actuator::is_running()
@@ -166,7 +175,7 @@ double Actuator::get_position()
 
 int8_t Actuator::get_position_raw(double& angle)
 {
-    return 0;
+    return (stepper_fb.angleR(angle, U_RAW, true));
 }
 
 double Actuator::degrees_to_volume(C_Stat compliance)
@@ -261,7 +270,9 @@ uint16_t Actuator::set_current_position_as_zero()
  */
 void Actuator::set_zero_position(uint16_t new_zero)
 {
-
+    // Zero the zero register first, then write the actual value.
+    stepper_fb.zeroRegW(0);
+    stepper_fb.zeroRegW(new_zero);
 }
 
 bool Actuator::add_correction()
@@ -341,10 +352,8 @@ bool Actuator::add_correction()
     return true;
 }
 
-Fault Actuator::calculate_trajectory(const float& duration_s, const float& goal_pos_deg, float& vel_deg)
+void Actuator::calculate_trajectory(const float& duration_s, const float& goal_pos_deg, float& vel_deg)
 {
-    if (duration_s <= 0) return Fault::FT_ACTUATOR_INVALID_TIME;// Invalid time.
-
     // Get the current position of the actuator
     const float cur_pos_deg = (float) get_position();
 
@@ -355,6 +364,7 @@ Fault Actuator::calculate_trajectory(const float& duration_s, const float& goal_
     vel_deg = distance_deg / duration_s;
 
     if (TIMING_PULLEY_DEGREES_TO_STEPS(vel_deg) > STEPPER_MAX_STEPS_PER_SECOND) {
+        printf("Max velocity requested! %.2f, clipping to %0.2f!\n", vel_deg, TIMING_PULLEY_STEPS_TO_DEGREES(STEPPER_MAX_STEPS_PER_SECOND));
 
         // Cap to max velocity
         vel_deg = TIMING_PULLEY_STEPS_TO_DEGREES(STEPPER_MAX_STEPS_PER_SECOND);
@@ -363,6 +373,4 @@ Fault Actuator::calculate_trajectory(const float& duration_s, const float& goal_
 #if DEBUG_WAVEFORM
     serial_printf("Pos: %f, Goal:%f, Speed: %f\n", cur_pos_deg, goal_pos_deg, vel_deg);
 #endif
-
-    return Fault::FT_NONE;
 }

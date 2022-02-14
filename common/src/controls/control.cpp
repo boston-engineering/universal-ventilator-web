@@ -32,16 +32,12 @@ AlarmManager alarm_manager{SPEAKER_PIN, &cycle_count};
 /* State machine instance. Takes in a pointer to actuator
  * as there are actuator commands within the state machine.
  */
-// Machine machine(States::ST_STARTUP, &actuator, &waveform, &alarm);
-Machine machine(States::ST_STARTUP, &actuator, &waveform, &alarm_manager, &cycle_count);
+Machine machine(States::ST_STARTUP, &actuator, &waveform, &gauge_sensor, &alarm_manager, &cycle_count);
 
 // Bool to keep track of the alert box
 static bool alert_box_already_visible = false;
 
-std::default_random_engine generator;
-std::uniform_int_distribution<int> distribution(0, 100);
-
-void loop_simulate_readouts(lv_timer_t* timer)
+void loop_test_readout(lv_timer_t* timer)
 {
 
     static bool timer_delay_complete = false;
@@ -83,12 +79,11 @@ void loop_simulate_readouts(lv_timer_t* timer)
 
     // Poll gauge sensor, add point to graph and update readout obj.
     // Will not refresh until explicitly told
-    static double cur_pressure = 0;
+    static double cur_pressure = -2;
     screen->get_chart(CHART_IDX_PRESSURE)->add_data_point(cur_pressure);
     set_readout(AdjValueType::CUR_PRESSURE, cur_pressure);
-    set_readout(AdjValueType::PRES, cur_pressure);
     screen->get_chart(CHART_IDX_FLOW)->add_data_point(cur_pressure);
-    set_readout(AdjValueType::FLOW, cur_pressure);
+    set_readout(AdjValueType::PLAT_PRESSURE, cur_pressure);
     cur_pressure += 1;
     double rand = (distribution(generator) / 100.0);
     cur_pressure += rand;
@@ -110,8 +105,6 @@ void loop_simulate_readouts(lv_timer_t* timer)
 
     set_readout(PEEP, 30);
     set_readout(PIP, 30);
-    set_readout(IE_RATIO_LEFT, 1.2);
-    set_readout(IE_RATIO_RIGHT, 2.0);
 
     // Check to see if it's time to refresh the readout boxes
     if (has_time_elapsed(&last_readout_refresh, READOUT_REFRESH_INTERVAL)) {
@@ -136,7 +129,7 @@ void loop_update_readouts(lv_timer_t* timer)
     static uint32_t last_readout_refresh = 0;
 
     // Don't poll the sensors before we're sure everything's had a chance to init
-    if (!timer_delay_complete && (lv_tick_get() >= SENSOR_POLL_STARTUP_DELAY)) {
+    if (!timer_delay_complete && (millis() >= SENSOR_POLL_STARTUP_DELAY)) {
         timer_delay_complete = true;
     }
     if (!timer_delay_complete) {
@@ -165,10 +158,21 @@ void loop_update_readouts(lv_timer_t* timer)
     screen->get_chart(CHART_IDX_PRESSURE)->add_data_point(cur_pressure);
     set_readout(AdjValueType::CUR_PRESSURE, cur_pressure);
 
-    // Poll vT sensor, update readout obj.
+    // Poll sensors, update readout obj.
     // Will not refresh until explicitly told
-    double cur_tidal_volume = control_get_degrees_to_volume_ml();
-    set_readout(AdjValueType::TIDAL_VOLUME, cur_tidal_volume);
+    // Waveform parameters
+    waveform_params* p_wave_params = control_get_waveform_params();
+    set_readout(AdjValueType::TIDAL_VOLUME, p_wave_params->m_tidal_volume);
+    set_readout(AdjValueType::RESPIRATION_RATE, p_wave_params->m_rr);
+    set_readout(AdjValueType::IE_RATIO_LEFT, p_wave_params->m_ie_i);
+    set_readout(AdjValueType::IE_RATIO_RIGHT, p_wave_params->m_ie_e);
+    set_readout(AdjValueType::PEEP, p_wave_params->m_peep);
+    set_readout(AdjValueType::PIP, p_wave_params->m_pip);
+    set_readout(AdjValueType::PLAT_PRESSURE, p_wave_params->m_plateau_press);
+
+    double cur_flow = diff_sensor.get_flow(units_flow::lpm, true, Order_type::third);
+    screen->get_chart(CHART_IDX_FLOW)->add_data_point(cur_flow);
+    set_readout(AdjValueType::FLOW, cur_flow);
 
     // TODO add more sensors HERE
 
@@ -209,7 +213,7 @@ void handle_alerts()
         last_alarm_count = alarm_count;
 
         Alarm* alarm_arr = control_get_alarm_list();
-        std::string alarm_strings[NUM_ALARMS];
+        String alarm_strings[NUM_ALARMS];
         uint16_t buf_size = 0;
         uint16_t alarm_list_idx = 0;
         for (uint16_t i = 0; i < NUM_ALARMS; i++) {
@@ -250,8 +254,8 @@ void control_update_waveform_param(AdjValueType type, float new_value)
             LV_LOG_INFO("PEEP is now %.1f", new_value);
             break;
         case PLATEAU_TIME:
-            // TODO
-            LV_LOG_INFO("TO ADD: PLATEAU TIME");
+            wave_params->plateau_time = (uint16_t) new_value;
+            LV_LOG_INFO("PLATEAU TIME is now %.1f", new_value);
             break;
         case IE_RATIO_LEFT:
             wave_params->ie_i = new_value;
@@ -264,7 +268,6 @@ void control_update_waveform_param(AdjValueType type, float new_value)
         default:
             break;
     }
-    control_calculate_waveform();
 }
 
 /**
@@ -345,9 +348,12 @@ double get_readout(AdjValueType type)
     return *adjustable_values[type].get_value_measured();
 }
 
-void control_handler_cb()
+void control_handler()
 {
     static bool ledOn = false;
+
+    // LED to visually show state machine is running.
+    digitalWrite(DEBUG_LED, ledOn);
 
     // Toggle the LED.
     ledOn = !ledOn;
@@ -360,7 +366,7 @@ void control_handler_cb()
  * The actuator, in this case a stepper is serviced periodically
  * to "step" the motor.
  */
-void actuator_handler_cb()
+void actuator_handler()
 {
     actuator.run();
 }
@@ -370,9 +376,18 @@ void actuator_handler_cb()
 void control_init()
 {
 #if ENABLE_CONTROL
+    // Debug led setup
+    pinMode(DEBUG_LED, OUTPUT);
 
     //  Storage init
     storage.init();
+
+    // Check EEPROM CRC. Load defaults if CRC fails.
+    if (!storage.is_crc_ok()) {
+        Serial.println("CRC failed. Loading defaults.");
+        // No settings found, or settings corrupted.
+        storage.load_defaults();
+    }
 
     // Initialize the actuator
     actuator.init();
@@ -392,16 +407,14 @@ void control_init()
     actuator.set_zero_position(settings.actuator_home_offset_adc_counts);
 
     // Initialize the Gauge Pressure Sensor
-    gauge_sensor.init(MAX_GAUGE_PRESSURE, MIN_GAUGE_PRESSURE, RESISTANCE_1, RESISTANCE_2, settings.gpressure_offset_adc_counts);
+    gauge_sensor.init(MAX_GAUGE_PRESSURE, MIN_GAUGE_PRESSURE, RESISTANCE_1, RESISTANCE_2, 0);
 
     // Initialize the Differential Pressure Sensor
     if (settings.diff_pressure_type == PRESSURE_SENSOR_TYPE_0) {
-        diff_sensor.init(MAX_DIFF_PRESSURE_TYPE_0, MIN_DIFF_PRESSURE_TYPE_0, RESISTANCE_1, RESISTANCE_2,
-                         settings.dpressure_offset_adc_counts);
+        diff_sensor.init(MAX_DIFF_PRESSURE_TYPE_0, MIN_DIFF_PRESSURE_TYPE_0, RESISTANCE_1, RESISTANCE_2, 0);
     }
     else if (settings.diff_pressure_type == PRESSURE_SENSOR_TYPE_1) {
-        diff_sensor.init(MAX_DIFF_PRESSURE_TYPE_1, MIN_DIFF_PRESSURE_TYPE_1, RESISTANCE_1, RESISTANCE_2,
-                         settings.dpressure_offset_adc_counts);
+        diff_sensor.init(MAX_DIFF_PRESSURE_TYPE_1, MIN_DIFF_PRESSURE_TYPE_1, RESISTANCE_1, RESISTANCE_2, 0);
     }
 
     // Initialize the state machine
@@ -410,20 +423,15 @@ void control_init()
     /* Setup a timer and a function handler to run
      * the state machine.
      */
-//    Timer0.attachInterrupt(control_handler);
-//    Timer0.start(CONTROL_HANDLER_PERIOD_US);
+    Timer0.attachInterrupt(control_handler);
+    Timer0.start(CONTROL_HANDLER_PERIOD_US);
 
     /* Setup a timer and a function handler to run
      * the actuation.
      */
-//    Timer1.attachInterrupt(actuator_handler);
-//    Timer1.start(ACTUATOR_HANDLER_PERIOD_US);
+    Timer1.attachInterrupt(actuator_handler);
+    Timer1.start(ACTUATOR_HANDLER_PERIOD_US);
 
-    // Check EEPROM CRC. Load defaults if CRC fails.
-    if (!storage.is_crc_ok()) {
-        // No settings found, or settings corrupted.
-        storage.load_defaults();
-    }
 #endif
 }
 
@@ -456,7 +464,7 @@ int8_t control_get_actuator_position_raw(double& angle)
  */
 void control_eeprom_write_default()
 {
-
+    storage.load_defaults();
 }
 
 /* Set the current angular position of the actuator as home
@@ -470,6 +478,7 @@ void control_zero_actuator_position()
     settings.actuator_home_offset_adc_counts = actuator.set_current_position_as_zero();
 
     // Store this value to the eeprom.
+    storage.set_settings(settings);
 }
 
 void control_write_ventilator_params()
@@ -485,6 +494,7 @@ void control_write_ventilator_params()
     settings.ie_ratio_left = get_control_target(IE_RATIO_LEFT);
     settings.ie_ratio_right = get_control_target(IE_RATIO_RIGHT);
 
+    storage.set_settings(settings);
 }
 
 void control_get_serial(char* serial_buffer)
@@ -526,6 +536,11 @@ const char** control_get_state_list(uint8_t* size)
 void control_display_storage()
 {
     storage.display_storage();
+}
+
+bool control_is_crc_ok()
+{
+    return storage.is_crc_ok();
 }
 
 double control_get_degrees_to_volume(C_Stat compliance)
@@ -590,6 +605,11 @@ void control_alarm_snooze()
     alarm_manager.snooze();
 }
 
+void control_set_fault(Fault id)
+{
+    machine.set_fault(id);
+}
+
 void control_toggle_alarm_snooze()
 {
     alarm_manager.toggle_snooze();
@@ -600,7 +620,7 @@ int16_t control_get_alarm_count()
     return alarm_manager.numON();
 }
 
-std::string control_get_alarm_text()
+String control_get_alarm_text()
 {
     return (alarm_manager.getText());
 }

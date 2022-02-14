@@ -1,7 +1,7 @@
 #ifndef UVENT_MAIN_DISPLAY_H
 #define UVENT_MAIN_DISPLAY_H
 
-#include "lvgl/lvgl.h"
+#include <lvgl/lvgl.h>
 
 // LVGL Style Macros
 #define SIZEANDALIGN(x, y, w, h, align) \

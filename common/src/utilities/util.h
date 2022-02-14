@@ -15,8 +15,8 @@
 bool has_time_elapsed(uint32_t* ptr, uint32_t n);
 
 // Returns the current time in seconds
-inline float now_s() { return lv_tick_get() * 1e-3; }
+inline float now_s() { return (float) (static_cast<float>(lv_tick_get()) * 1e-3); }
 
 bool is_whole(double x, double epsilon = EPSILON);
 
-#endif //UVENT_UTIL_H
+#endif//UVENT_UTIL_H

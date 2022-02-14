@@ -3,6 +3,7 @@
  */
 
 #include <string>
+#include <utility>
 #include <lvgl/src/hal/lv_hal_tick.h>
 
 #include "alarm.h"
@@ -10,9 +11,9 @@
 using std::string;
 using std::max;
 
-Alarm::Alarm(const string &default_text, const int &min_bad_to_trigger, const int &min_good_to_clear,
+Alarm::Alarm(string default_text, const int &min_bad_to_trigger, const int &min_good_to_clear,
              const AlarmLevel &alarm_level) :
-        text_(default_text), min_bad_to_trigger_(min_bad_to_trigger), min_good_to_clear_(min_good_to_clear),
+        text_(std::move(default_text)), min_bad_to_trigger_(min_bad_to_trigger), min_good_to_clear_(min_good_to_clear),
         alarm_level_(alarm_level) {}
 
 void Alarm::reset() {

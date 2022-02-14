@@ -7,6 +7,7 @@
 MainScreen::MainScreen()
         : Screen()
 {
+
     charts[CHART_IDX_FLOW] = SensorChart(
             "Flow (Lpm)",
             FLOW_CHART_MIN_VALUE,
@@ -66,9 +67,14 @@ void MainScreen::attach_settings_cb()
 
     if (settings_button) {
         auto on_settings_check = [](lv_event_t* evt) {
-
             lv_obj_t* target = lv_event_get_target(evt);
             lv_state_t state = lv_obj_get_state(target);
+
+            // No No
+            if (active_floating_window) {
+                lv_obj_add_state(target, LV_STATE_CHECKED);
+                return;
+            }
 
             if (!lv_obj_has_flag(target, LV_OBJ_FLAG_CHECKABLE)) {
                 return;
@@ -81,10 +87,10 @@ void MainScreen::attach_settings_cb()
                 lv_obj_t* start = get_start_button();
                 lv_obj_t* mute = get_mute_button();
 
-                if(start) {
+                if (start) {
                     lv_obj_add_state(start, LV_STATE_DISABLED);
                 }
-                if(mute) {
+                if (mute) {
                     lv_obj_add_state(mute, LV_STATE_DISABLED);
                 }
             }
@@ -96,7 +102,7 @@ void MainScreen::attach_settings_cb()
                 if (start && (control_get_state() != States::ST_ACTUATOR_HOME)) {
                     lv_obj_clear_state(start, LV_STATE_DISABLED);
                 }
-                if(mute) {
+                if (mute) {
                     lv_obj_clear_state(mute, LV_STATE_DISABLED);
                 }
             }
@@ -117,7 +123,7 @@ void MainScreen::generate_charts()
     lv_obj_t* chart_container = lv_obj_get_child(screen_container, 0);
 
     charts[CHART_IDX_FLOW].generate_chart(chart_container, FLOW);
-    charts[CHART_IDX_PRESSURE].generate_chart(chart_container, PRES);
+    charts[CHART_IDX_PRESSURE].generate_chart(chart_container, CUR_PRESSURE);
 }
 
 const SensorChart* MainScreen::get_chart(uint8_t idx)

@@ -6,6 +6,7 @@
 #include "../uvent_conf.h"
 #include "waveform.h"
 #include "../alarm/alarm.h"
+#include "../sensors/pressure_sensor.h"
 
 #define stringify(name) #name
 
@@ -27,8 +28,7 @@ enum class States {
 class Machine {
 public:
     // Constructor
-    // Machine(States, Actuator*, Waveform*, AlarmManager*);
-    Machine(States, Actuator*, Waveform*, AlarmManager*, uint32_t* cycle_count);
+    Machine(States, Actuator*, Waveform*, PressureSensor* gauge_pressure, AlarmManager*, uint32_t* cycle_count);
 
     void setup();
     void run();
@@ -37,6 +37,7 @@ public:
     States get_current_state();
     void change_state(States);
     void handle_errors();
+    void set_fault(Fault);
 
 private:
     // Current state of the state machine.
@@ -59,6 +60,9 @@ private:
     const uint32_t check_actuator_move_in_ms = 400;// Wait time before checking for actuator movement.
     const uint32_t check_actuator_move_in_ticks = (check_actuator_move_in_ms * 1000) / CONTROL_HANDLER_PERIOD_US;
 
+    // Debug fault flag for actuator.
+    bool actuator_force_fault_debug = false;
+
     // Fault code
     Fault fault_id;
 
@@ -68,6 +72,10 @@ private:
     waveform_params* p_waveparams;
 
     AlarmManager* p_alarm_manager;
+
+    PressureSensor* p_gauge_pressure;
+
+    bool inspiration_state_triggered;
 
     // Set the current state in the state machine
     void set_state(States);

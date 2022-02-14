@@ -17,8 +17,6 @@ void Storage::display_storage()
     printf("Serial no.: %s\n", temp_set.serial);
     printf("Diff. pressure Type: %d\n", temp_set.diff_pressure_type);
     printf("Actuator home offset: %d\n", temp_set.actuator_home_offset_adc_counts);
-    printf("Gauge Pressure offset: %d\n", temp_set.gpressure_offset_adc_counts);
-    printf("Diff. Pressure offset: %d\n", temp_set.dpressure_offset_adc_counts);
     printf("Tidal Volume: %d\n", temp_set.tidal_volume);
     printf("Resp. Rate: %d\n", temp_set.respiration_rate);
     printf("PEEP: %d\n", temp_set.peep_limit);

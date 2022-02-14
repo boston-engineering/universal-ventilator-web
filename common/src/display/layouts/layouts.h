@@ -11,9 +11,10 @@ using std::string;
 /************************************************/
 /*              Defines and Macros              */
 /************************************************/
+// abs does some weird stuff when defined by arduino
+#undef abs
 
-// LV_IMG_DECLARE(be_tm_tagline_logo);
-extern const lv_img_dsc_t be_tm_tagline_logo;
+LV_IMG_DECLARE(be_tm_tagline_logo);
 
 typedef void (* ButtonCreateFunc)();
 typedef void (* ConfirmChoiceCb)(lv_event_t* evt);
@@ -55,10 +56,10 @@ void set_alert_count_visual(uint16_t alert_count);
 void set_alert_text(const char* message);
 void set_alert_text(std::string* messages, uint16_t count, uint16_t buf_size);
 // Button functions
-void disable_start_button();
-void enable_start_button();
 void add_start_button();
 void add_mute_button();
+void disable_start_button();
+void enable_start_button();
 lv_obj_t* get_start_button();
 lv_obj_t* get_mute_button();
 lv_obj_t* get_settings_config_button();

@@ -19,8 +19,7 @@ const char* state_string[] =
                 stringify(ST_DEBUG),
                 stringify(ST_OFF)};
 
-// Machine::Machine(States st, Actuator* act, Waveform* wave, AlarmManager* al)
-Machine::Machine(States st, Actuator* act, Waveform* wave, AlarmManager* al, uint32_t* cc)
+Machine::Machine(States st, Actuator* act, Waveform* wave, PressureSensor* gp, AlarmManager* al, uint32_t* cc)
 {
     p_actuator = act;
     state = st;
@@ -32,6 +31,7 @@ Machine::Machine(States st, Actuator* act, Waveform* wave, AlarmManager* al, uin
 
     p_alarm_manager = al;
     cycle_count = cc;
+    p_gauge_pressure = gp;
 }
 
 // Set the current state in the state machine
@@ -61,10 +61,18 @@ void Machine::state_inspiration()
 {
     if (state_first_entry) {
 
+        // Clear all faults. They will get processed as states run.
+        fault_id = Fault::FT_NONE;
+
         // Check if paddle is at home.
         if (!(p_actuator->is_home())) {
+#if USE_AMS_FEEDBACK
             p_actuator->add_correction();
             state_first_entry = true;
+#else
+            set_state(States::ST_ACTUATOR_HOME);
+            inspiration_state_triggered = true;
+#endif
             return;
         }
         (*cycle_count)++;
@@ -77,6 +85,9 @@ void Machine::state_inspiration()
             fault_id = Fault::FT_WAVEFORM_CALC_ERROR;
             // Error in waveform calculation. Switch to error state
             set_state(States::ST_FAULT);
+
+            // Return early. Don't setup the actuator.
+            return;
         }
 
         float goal_pos_deg = p_actuator->volume_to_degrees(C_Stat::FIFTY, p_waveparams->volume_ml / 1000);
@@ -92,6 +103,12 @@ void Machine::state_inspiration()
 
     // Check if target has been reached.
     if (p_waveform->is_inspiration_done()) {
+        // Keep track of max pip.
+        p_waveform->set_current_pip(p_gauge_pressure->get_pressure(units_pressure::cmH20));
+
+        // Note the volume dispensed. Keep this as a copy of the command volume.
+        p_waveparams->m_tidal_volume = p_waveparams->volume_ml;
+
         set_state(States::ST_INSPR_HOLD);
     }
 }
@@ -102,6 +119,12 @@ void Machine::state_inspiration_hold()
         state_first_entry = false;
     }
     if (p_waveform->is_inspiration_hold_done()) {
+        // Save the plateau pressure.
+        p_waveparams->m_plateau_press = p_gauge_pressure->get_pressure(units_pressure::cmH20);
+
+        // Mark the inspiration time
+        p_waveform->mark_inspiration_time(now_s());
+
         set_state(States::ST_EXPR);
     }
 }
@@ -136,6 +159,9 @@ void Machine::state_peep_pause()
     }
 
     if (p_waveform->is_peep_pause_done()) {
+        // Save the peep pressure.
+        p_waveparams->m_peep = p_gauge_pressure->get_pressure(units_pressure::cmH20);
+        p_waveform->set_pip_peak_and_reset();
         set_state(States::ST_EXPR_HOLD);
     }
 }
@@ -148,6 +174,13 @@ void Machine::state_expiration_hold()
 
     if (p_waveform->is_expiration_done()) {
         set_state(States::ST_INSPR);
+        p_waveform->calculate_respiration_rate();
+
+        // Mark the inspiration time
+        p_waveform->mark_expiration_time(now_s());
+
+        // Calculate waveform params for UI reporting
+        p_waveform->calculate_current_parameters();
     }
 }
 
@@ -158,12 +191,16 @@ void Machine::state_actuator_home()
 
     if (state_first_entry) {
         state_first_entry = false;
+        disable_start_button();
 
         // Check if the paddle is at home position
         // If not move the paddle to home.
         if (is_home) {
             // Let the motor driver know that this is 0 position
             p_actuator->set_position_as_home();
+
+            // Reset measured parameters.
+            p_waveform->reset_measured_params();
 
             enable_start_button();
             set_state(States::ST_OFF);
@@ -181,8 +218,18 @@ void Machine::state_actuator_home()
         // Let the motor driver know that this is 0 position
         p_actuator->set_position_as_home();
 
+        // Reset measured parameters.
+        p_waveform->reset_measured_params();
+
         enable_start_button();
         set_state(States::ST_OFF);
+        if (inspiration_state_triggered) {
+            inspiration_state_triggered = false;
+            set_state(States::ST_INSPR);
+        }
+        else {
+            set_state(States::ST_OFF);
+        }
     }
     else {
         // Homing in progress.
@@ -191,16 +238,27 @@ void Machine::state_actuator_home()
         * only if home is not reached.
         * Also do the check after a time delay as it takes time for
         * the drive to respond.
+        * The || check for fault flag is for checking a forced fault through the parser.
+        * Only check if feedback position chip is enabled.
         */
+#if USE_AMS_FEEDBACK
         if (machine_timer > check_actuator_move_in_ticks) {
-            if ((is_home == false) && (p_actuator->is_moving() == false)) {
+            if (((is_home == false) && (p_actuator->is_moving() == false)) || (actuator_force_fault_debug == true)) {
                 // Set the fault ID:
                 fault_id = Fault::FT_ACTUATOR_FAULT;
                 enable_start_button();
                 // Actuator is not moving. Switch to error state
                 set_state(States::ST_FAULT);
+
+                // Reset the force fault
+                actuator_force_fault_debug = false;
             }
         }
+        else {
+            // Service is_moving, so that the prev_position is valid, when the above condition is true.
+            p_actuator->is_moving();
+        }
+#endif
     }
 }
 
@@ -216,6 +274,8 @@ void Machine::state_fault()
 
         // Stop the actuator
         p_actuator->set_speed(Tick_Type::TT_DEGREES, 0);
+
+        printf("Fault code : %d", (int) fault_id);
     }
 }
 
@@ -318,7 +378,19 @@ void Machine::handle_errors()
         p_alarm_manager->badPlateau(false);
         p_alarm_manager->lowPressure(false);
         p_alarm_manager->noTidalPres(false);
+        p_alarm_manager->highPressure(p_gauge_pressure->get_pressure(units_pressure::cmH20) > PRESSURE_MAX);
     }
 
     p_alarm_manager->update();
+}
+
+void Machine::set_fault(Fault id)
+{
+    // Set the fault_id. It will get picked up at the right states.
+
+    // Service only the actuator fault for now.
+    if (id == Fault::FT_ACTUATOR_FAULT) {
+        // Set the special debug fault flag
+        actuator_force_fault_debug = true;
+    }
 }

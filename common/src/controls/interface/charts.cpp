@@ -3,27 +3,28 @@
 #include "../../utilities/util.h"
 #include "charts.h"
 
-static void on_graph_readout_update(lv_event_t *evt) {
+static void on_graph_readout_update(lv_event_t* evt)
+{
     lv_obj_t* label = lv_event_get_target(evt);
     auto* value_ptr = (AdjustableValue*) lv_event_get_user_data(evt);
-    if(!label || !value_ptr) {
+    if (!label || !value_ptr) {
         return;
     }
 
     double val = *value_ptr->get_value_measured();
     const char* formatter = value_ptr->get_settings().measured_formatter;
-    if(strcmp("%ld", formatter) == 0 || strcmp("%d", formatter) == 0 || strcmp("%u", formatter) == 0) {
+    if (strcmp("%ld", formatter) == 0 || strcmp("%d", formatter) == 0 || strcmp("%u", formatter) == 0) {
         lv_label_set_text_fmt(label, formatter, (int32_t) val);
     } else {
         lv_label_set_text_fmt(label, formatter, val);
     }
 }
 
-SensorChart::SensorChart(const char *name, int32_t min_val, int32_t max_val, uint32_t chart_points,
-                         uint32_t refresh_time,
-                         bool use_dots, lv_coord_t dot_size, lv_coord_t line_width)
+SensorChart::SensorChart(const char* name, int32_t min_val, int32_t max_val, uint32_t chart_points,
+        uint32_t refresh_time,
+        bool use_dots, lv_coord_t dot_size, lv_coord_t line_width)
         : name(name), range_min(min_val), range_max(max_val), chart_points(chart_points), refresh_time(refresh_time),
-          use_dots(use_dots), dot_size(dot_size), line_width(line_width) {}
+          use_dots(use_dots), dot_size(dot_size), line_width(line_width) { }
 
 void SensorChart::generate_chart(lv_obj_t *parent, AdjValueType tracked_type = UNKNOWN) {
     if (chart != nullptr) {
@@ -31,7 +32,7 @@ void SensorChart::generate_chart(lv_obj_t *parent, AdjValueType tracked_type = U
         return;
     }
 
-    lv_obj_t *label = lv_label_create(parent);
+    lv_obj_t* label = lv_label_create(parent);
     lv_label_set_text(label, name);
     lv_obj_set_style_text_font(label, &lv_font_montserrat_16, LV_PART_MAIN);
     lv_obj_set_height(label, LV_SIZE_CONTENT);
@@ -53,16 +54,16 @@ void SensorChart::generate_chart(lv_obj_t *parent, AdjValueType tracked_type = U
 
     lv_chart_set_type(chart, LV_CHART_TYPE_LINE);   /*Show lines and points too*/
     lv_chart_set_range(chart, LV_CHART_AXIS_PRIMARY_Y, range_min, range_max);
+    lv_chart_set_div_line_count(chart, 2, 11); /*Divide the graph area into 10(11 lines) equal parts*/
+
 
     /*Add data series*/
     lv_chart_add_series(chart, lv_palette_main(LV_PALETTE_GREEN), LV_CHART_AXIS_PRIMARY_Y);
     lv_chart_set_point_count(chart, chart_points);
     lv_chart_set_update_mode(chart, LV_CHART_UPDATE_MODE_SHIFT);
-    lv_chart_set_div_line_count(chart, 0, 11); /*Divide the graph area into 10(11 lines) equal parts*/
-
-    lv_obj_t *readout_label = lv_label_create(chart);
-    lv_obj_set_style_text_font(readout_label, &lv_font_montserrat_22, LV_PART_MAIN);
-    lv_label_set_text_fmt(readout_label, "0.00");
+    lv_obj_t* readout_label = lv_label_create(chart);
+    lv_obj_set_style_text_font(readout_label, &lv_font_montserrat_28, LV_PART_MAIN);
+    lv_label_set_text_fmt(readout_label, "--");
     lv_obj_align(readout_label, LV_ALIGN_TOP_LEFT, 0, -5);
 
     if (tracked_type < ADJ_VALUE_COUNT) {
@@ -90,6 +91,5 @@ void SensorChart::refresh_chart() const {
     if (!chart) {
         return;
     }
-    printf("%u\n", last_refreshed);
     lv_chart_refresh(chart);
 }

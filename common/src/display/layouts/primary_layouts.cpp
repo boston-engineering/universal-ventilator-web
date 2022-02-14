@@ -1,8 +1,7 @@
-#include "../../uvent_conf.h"
-#include "../../controls/control.h"
-#include "../../utilities/util.h"
-#include <cmath>
+#include <string>
 #include "../main_display.h"
+#include "../../utilities/util.h"
+#include "../../controls/control.h"
 #include "layouts.h"
 
 #define LABEL_BUF_SIZE 24
@@ -49,7 +48,7 @@ void setup_readouts()
 
     setup_adjustable_readout(PEEP);
     setup_adjustable_readout(PIP);
-    setup_adjustable_readout(CUR_PRESSURE);
+    setup_adjustable_readout(PLAT_PRESSURE);
 }
 
 void setup_controls()
@@ -94,7 +93,7 @@ void setup_visual_2()
 
     lv_obj_t* chart_holder = lv_obj_create(visual_area_2);
     lv_obj_add_style(chart_holder, STYLE_PTR_CM(CHART_HOLDER), LV_PART_MAIN);
-//    lv_obj_set_style_pad_all(chart_holder, 10 px, LV_PART_MAIN);
+    //    lv_obj_set_style_pad_all(chart_holder, 10 px, LV_PART_MAIN);
 
     lv_obj_t* spacer = lv_obj_create(visual_area_2);
     lv_obj_add_style(spacer, STYLE_PTR_CM(SPACER), LV_PART_MAIN);
@@ -185,7 +184,7 @@ void setup_adjustable_readout(AdjValueType type, lv_obj_t* parent_container, con
     if (settings.unit) {
         value_unit_label = lv_label_create(value_container);
         lv_obj_add_style(value_unit_label, STYLE_PTR_CM(READOUT_VALUE_UNIT_TEXT), LV_PART_MAIN);
-        lv_label_set_text_fmt(value_unit_label, "%s", settings.unit);
+        lv_label_set_text_fmt(value_unit_label, settings.unit);
     }
 
 #if DEBUG_BORDER_READOUTS
@@ -235,7 +234,7 @@ void setup_adjustable_control(AdjValueType type)
     const char* formatter = settings.target_formatter;
     // Make sure to cast if we're trying for an int
     if (strcmp("%d", formatter) == 0 || strcmp("%ld", formatter) == 0 || strcmp("%i", formatter) == 0) {
-        lv_label_set_text_fmt(value_label, formatter, (long) *value_class->get_value_target());
+        lv_label_set_text_fmt(value_label, formatter, (int32_t) *value_class->get_value_target());
     }
     else {
         lv_label_set_text_fmt(value_label, formatter, *value_class->get_value_target());
@@ -281,7 +280,8 @@ void setup_adjustable_control(AdjValueType type)
 #endif
 }
 
-void get_ie_readout_text_buf(char* output_buf) {
+void get_ie_readout_text_buf(char* output_buf)
+{
     double left = get_readout(AdjValueType::IE_RATIO_LEFT);
     double right = get_readout(AdjValueType::IE_RATIO_RIGHT);
     char buf_left[5];
@@ -290,9 +290,10 @@ void get_ie_readout_text_buf(char* output_buf) {
         lv_snprintf(buf_left, 5, "--");
     }
     else {
-        if(is_whole(left)) {
+        if (is_whole(left)) {
             lv_snprintf(buf_left, 5, "%ld", (int32_t) left);
-        } else {
+        }
+        else {
             lv_snprintf(buf_left, 5, "%.1f", left);
         }
     }
@@ -301,9 +302,10 @@ void get_ie_readout_text_buf(char* output_buf) {
         lv_snprintf(buf_right, 5, "--");
     }
     else {
-        if(is_whole(right)) {
+        if (is_whole(right)) {
             lv_snprintf(buf_right, 5, "%ld", (int32_t) right);
-        } else {
+        }
+        else {
             lv_snprintf(buf_right, 5, "%.1f", right);
         }
     }
@@ -321,13 +323,13 @@ void setup_ie_readout()
     lv_obj_t* value_container = lv_obj_get_child(target, 1);
     lv_obj_t* value_amount_spangroup = lv_obj_get_child(value_container, 0);
     lv_span_t* span = lv_spangroup_get_child(value_amount_spangroup, 0);
-    lv_style_set_text_font(&span->style, &lv_font_montserrat_26);
+    lv_style_set_text_font(&span->style, &lv_font_montserrat_28);
 }
 
-static void ie_control_label_text(lv_obj_t* label, double val)
+static void ie_label_text(lv_obj_t* label, double val)
 {
     if (is_whole(val)) {
-        lv_label_set_text_fmt(label, "%u", (uint32_t) val);
+        lv_label_set_text_fmt(label, "%ld", (uint32_t) val);
     }
     else {
         lv_label_set_text_fmt(label, "%.1f", val);
@@ -363,7 +365,7 @@ void setup_ie_controls()
     lv_obj_t* text_container = lv_obj_create(obj);
     auto change_selected_cb = [](lv_event_t* evt) {
         if (!(evt->code == LV_EVENT_PRESSED || evt->code == LV_EVENT_LONG_PRESSED
-                || evt->code == LV_EVENT_LONG_PRESSED_REPEAT)) {
+              || evt->code == LV_EVENT_LONG_PRESSED_REPEAT)) {
             return;
         }
         toggle_ie_select();
@@ -400,9 +402,9 @@ void setup_ie_controls()
     double left_val = *left_class->get_value_target();
     double right_val = *right_class->get_value_target();
 
-    ie_control_label_text(value_label_left, left_val);
+    ie_label_text(value_label_left, left_val);
     lv_label_set_text_fmt(value_label_divider, ":");
-    ie_control_label_text(value_label_right, right_val);
+    ie_label_text(value_label_right, right_val);
 
     lv_obj_t* name_label = lv_label_create(text_container);
     lv_obj_set_width(name_label, LV_PCT(100));
@@ -514,7 +516,7 @@ void set_alert_count_visual(uint16_t alert_count)
         return;
     }
 
-    snprintf(buf, LABEL_BUF_SIZE, "%d ", alert_count);
+    lv_snprintf(buf, LABEL_BUF_SIZE, "%d ", alert_count);
     lv_span_set_text(count, buf);
 }
 
@@ -533,7 +535,7 @@ void set_alert_text(const char* message)
     lv_label_set_text_fmt(label, "%s", message);
 }
 
-void set_alert_text(string* messages, uint16_t count, uint16_t buf_size)
+void set_alert_text(std::string* messages, uint16_t count, uint16_t buf_size)
 {
     lv_obj_t* box = get_alert_box();
     if (!box) {
@@ -553,12 +555,12 @@ void set_alert_text(string* messages, uint16_t count, uint16_t buf_size)
     uint16_t buffer_pos = 0;
 
     for (uint16_t i = 0; i < count; i++) {
-        string str = messages[i];
-        snprintf((label_buffer + buffer_pos), (total_buffer_size - buffer_pos), "%s", str.c_str());
+        std::string str = messages[i];
+        lv_snprintf((label_buffer + buffer_pos), (total_buffer_size - buffer_pos), "%s", str.c_str());
         buffer_pos += str.length();
         // Add the spacer
         if (count > 1) {
-            snprintf((label_buffer + buffer_pos), (total_buffer_size - buffer_pos), "%s", spacer);
+            lv_snprintf((label_buffer + buffer_pos), (total_buffer_size - buffer_pos), "%s", spacer);
             buffer_pos += spacer_len;
         }
     }
@@ -570,17 +572,19 @@ void set_alert_text(string* messages, uint16_t count, uint16_t buf_size)
 /*          Functions to generate buttons       */
 /************************************************/
 
-void disable_start_button() {
+void disable_start_button()
+{
     lv_obj_t* btn = get_start_button();
-    if(!btn) {
+    if (!btn) {
         return;
     }
     lv_obj_add_state(btn, LV_STATE_DISABLED);
 }
 
-void enable_start_button() {
+void enable_start_button()
+{
     lv_obj_t* btn = get_start_button();
-    if(!btn) {
+    if (!btn) {
         return;
     }
     lv_obj_clear_state(btn, LV_STATE_DISABLED);
@@ -605,6 +609,7 @@ void add_start_button()
 
     auto on_press_cb = [](lv_event_t* evt) {
         lv_obj_t* btn = lv_event_get_target(evt);
+
         lv_obj_t* btn_label = lv_obj_get_child(btn, 0);
         if (evt->code == LV_EVENT_VALUE_CHANGED) {
             bool enabled = (strcmp(lv_label_get_text(btn_label), "Standby") == 0);
@@ -615,10 +620,10 @@ void add_start_button()
             else {
                 lv_label_set_text_fmt(btn_label, "Standby");
                 control_change_state(States::ST_INSPR);
-            }
 #if ENABLE_CONTROL
-            control_write_ventilator_params();
+                control_write_ventilator_params();
 #endif
+            }
         }
     };
 
@@ -646,17 +651,17 @@ void add_mute_button()
     lv_obj_add_event_cb(
             button,
             [](lv_event_t* evt) {
+                lv_obj_t* btn = lv_event_get_target(evt);
                 control_toggle_alarm_snooze();
             },
             LV_EVENT_VALUE_CHANGED,
-            nullptr
-    );
+            nullptr);
 }
 
 lv_obj_t* get_start_button()
 {
     lv_obj_t* visual_3 = SCR_C(VISUAL_AREA_3);
-    if(!visual_3) {
+    if (!visual_3) {
         return nullptr;
     }
     return lv_obj_get_child(visual_3, 0);
@@ -665,15 +670,16 @@ lv_obj_t* get_start_button()
 lv_obj_t* get_mute_button()
 {
     lv_obj_t* visual_3 = SCR_C(VISUAL_AREA_3);
-    if(!visual_3) {
+    if (!visual_3) {
         return nullptr;
     }
     return lv_obj_get_child(visual_3, 1);
 }
 
-lv_obj_t* get_settings_config_button() {
+lv_obj_t* get_settings_config_button()
+{
     lv_obj_t* settings_button_container = SCR_C(CONTROL_AREA_2);
-    if(!settings_button_container) {
+    if (!settings_button_container) {
         return nullptr;
     }
     lv_obj_t* settings_button = lv_obj_get_child(settings_button_container, 0);
@@ -689,7 +695,7 @@ lv_obj_t* add_settings_button(const char* title, lv_obj_t* parent)
     lv_obj_set_style_pad_bottom(button, 4 px, LV_PART_MAIN);
 
     lv_obj_t* label = lv_label_create(button);
-    lv_label_set_text_fmt(label, "%s", title);
+    lv_label_set_text_fmt(label, title);
     lv_obj_add_style(label, STYLE_PTR_CM(OPTION_BUTTON_TEXT), LV_PART_MAIN);
     lv_obj_align_to(label, button, LV_ALIGN_CENTER, 0, 0);
     lv_obj_center(label);
@@ -728,7 +734,6 @@ static void on_readout_update(lv_event_t* evt)
 
 void clear_top_alert_cb(lv_event_t* evt)
 {
-
 }
 
 /************************************************/
@@ -777,7 +782,7 @@ static void update_readout_labels(AdjustableValue* this_ptr, lv_obj_t* spangroup
 
         size_t spanlist_size = lv_spangroup_get_child_cnt(spangroup);
         // Get the int portion by default, we'll get the decimal portion later for float options
-        snprintf(buf, LABEL_BUF_SIZE, "%ld", (long) measured);
+        lv_snprintf(buf, LABEL_BUF_SIZE, "%ld", (int32_t) measured);
 
         if (spanlist_size < 1) {
             primary_span = lv_spangroup_new_span(spangroup);
@@ -798,14 +803,14 @@ static void update_readout_labels(AdjustableValue* this_ptr, lv_obj_t* spangroup
             lv_span_t* decimal_span;
             double decimal_portion = 0;
             if (measured != 0) {
-                decimal_portion = measured - ((long) measured);
+                decimal_portion = measured - ((int32_t) measured);
                 if (decimal_portion < 0) {
                     decimal_portion *= -1;
                 }
             }
 
             memset(buf, '\0', LABEL_BUF_SIZE);
-            snprintf(buf, LABEL_BUF_SIZE, "%.2f", (float) decimal_portion);
+            lv_snprintf(buf, LABEL_BUF_SIZE, "%.2f", (float) decimal_portion);
 
             if (spanlist_size == 1) {
                 decimal_span = lv_spangroup_new_span(spangroup);
@@ -824,13 +829,14 @@ static void update_readout_labels(AdjustableValue* this_ptr, lv_obj_t* spangroup
     lv_spangroup_refr_mode(spangroup);
 }
 
-static void update_ie_readout(AdjustableValue* this_ptr, lv_obj_t* spangroup) {
-    if(!(this_ptr->value_type == IE_RATIO_LEFT || this_ptr->value_type == IE_RATIO_RIGHT)) {
+static void update_ie_readout(AdjustableValue* this_ptr, lv_obj_t* spangroup)
+{
+    if (!(this_ptr->value_type == IE_RATIO_LEFT || this_ptr->value_type == IE_RATIO_RIGHT)) {
         return;
     }
     lv_span_t* span = lv_spangroup_get_child(spangroup, 0);
     char ie_buf[12];
-    if(!span) {
+    if (!span) {
         span = lv_spangroup_new_span(spangroup);
     }
     get_ie_readout_text_buf(ie_buf);
@@ -851,9 +857,10 @@ static void readout_update_cb(AdjustableValue* this_ptr, lv_event_t* evt)
         return;
     }
 
-    if(this_ptr->value_type == IE_RATIO_LEFT || this_ptr->value_type == IE_RATIO_RIGHT) {
+    if (this_ptr->value_type == IE_RATIO_LEFT || this_ptr->value_type == IE_RATIO_RIGHT) {
         update_ie_readout(this_ptr, value_amount_spangroup);
-    } else {
+    }
+    else {
         update_readout_labels(this_ptr, value_amount_spangroup);
         //    printMem();
     }
@@ -866,7 +873,7 @@ static void readout_update_cb(AdjustableValue* this_ptr, lv_event_t* evt)
 static void control_press_cb(AdjustableValue* this_ptr, lv_event_t* evt)
 {
     if (!(evt->code == LV_EVENT_PRESSED || evt->code == LV_EVENT_LONG_PRESSED
-            || evt->code == LV_EVENT_LONG_PRESSED_REPEAT)) {
+          || evt->code == LV_EVENT_LONG_PRESSED_REPEAT)) {
         return;
     }
 
@@ -885,7 +892,7 @@ static void control_press_cb(AdjustableValue* this_ptr, lv_event_t* evt)
             val += settings.step;
             break;
         default:
-            printf("%d\n", data->type);
+            Serial.println(data->type);
             return;
     }
 
@@ -923,7 +930,7 @@ static void update_normal_label(AdjustableValue* this_ptr)
     const char* formatter = settings.target_formatter;
     // Make sure to cast if we're trying for an int
     if (strcmp("%d", formatter) == 0 || strcmp("%ld", formatter) == 0 || strcmp("%i", formatter) == 0) {
-        lv_label_set_text_fmt(quantity_label, formatter, (long) *this_ptr->get_value_target());
+        lv_label_set_text_fmt(quantity_label, formatter, (int32_t) *this_ptr->get_value_target());
     }
     else {
         lv_label_set_text_fmt(quantity_label, formatter, *this_ptr->get_value_target());
@@ -938,7 +945,7 @@ static void update_ie_control_label(AdjustableValue* this_ptr)
     double val = *this_ptr->get_value_target();
 
     if (is_whole(val)) {
-        lv_label_set_text_fmt(selected_label, "%ld", (long) val);
+        lv_label_set_text_fmt(selected_label, "%ld", (int32_t) val);
     }
     else {
         lv_label_set_text_fmt(selected_label, "%.1f", val);

@@ -59,10 +59,13 @@ public:
     bool target_reached();
     bool add_correction();
     double volume_to_degrees(C_Stat compliance, double volume);
-    Fault calculate_trajectory(const float& duration_s, const float& goal_pos_deg, float& vel_deg);
+    void calculate_trajectory(const float& duration_s, const float& goal_pos_deg, float& vel_deg);
 
 private:
     Stepper stepper;
+
+    // Feedback
+    AMS_AS5048B stepper_fb;
 
     // Prev. value of angle sensor.
     // Used to detect movement.
