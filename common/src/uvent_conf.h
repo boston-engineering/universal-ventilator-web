@@ -61,7 +61,7 @@
 #endif
 
 // Control handler  period in microsec.
-#define CONTROL_HANDLER_PERIOD_US 20000
+#define CONTROL_HANDLER_PERIOD_US 25000
 
 // Actuator handler period in microsec.
 #define ACTUATOR_HANDLER_PERIOD_US 50
@@ -211,7 +211,7 @@
 // Chart & Readout values will be updated every time the sensor polls
 // These changes will not be visible until the next chart refresh time or
 // READOUT_REFRESH_INTERVAL
-#define SENSOR_POLL_INTERVAL 200
+#define SENSOR_POLL_INTERVAL 25
 // How long to delay before polling data (ms). Allows for startup time of hardware components
 #define SENSOR_POLL_STARTUP_DELAY 5000
 

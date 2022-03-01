@@ -175,7 +175,7 @@ double Actuator::get_position()
 
 int8_t Actuator::get_position_raw(double& angle)
 {
-    return (stepper_fb.angleR(angle, U_RAW, true));
+    return 0;
 }
 
 double Actuator::degrees_to_volume(C_Stat compliance)
@@ -270,9 +270,6 @@ uint16_t Actuator::set_current_position_as_zero()
  */
 void Actuator::set_zero_position(uint16_t new_zero)
 {
-    // Zero the zero register first, then write the actual value.
-    stepper_fb.zeroRegW(0);
-    stepper_fb.zeroRegW(new_zero);
 }
 
 bool Actuator::add_correction()

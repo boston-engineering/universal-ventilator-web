@@ -24,20 +24,20 @@ public:
     // Play the tone, if any
     void play()
     {
-        if (length_ == 0) {
-            return;
-        }
-        if (!playing_) {// Do once when tone starts
-            tone_timer_ = millis();
-            tone_step_ = 0;/home/drew/Downloads/ScopeData1.csv
-            playing_ = true;
-        }
-        tone_step_ %= length_;// Start again if tone finished
-        if (millis() > tone_timer_) {
-            tone_rrb(*pin_, notes_[tone_step_].note, notes_[tone_step_].duration);
-            tone_timer_ += notes_[tone_step_].duration + notes_[tone_step_].pause;
-            tone_step_++;
-        }
+//        if (length_ == 0) {
+//            return;
+//        }
+//        if (!playing_) {// Do once when tone starts
+//            tone_timer_ = millis();
+//            tone_step_ = 0;/home/drew/Downloads/ScopeData1.csv
+//            playing_ = true;
+//        }
+//        tone_step_ %= length_;// Start again if tone finished
+//        if (millis() > tone_timer_) {
+//            tone_rrb(*pin_, notes_[tone_step_].note, notes_[tone_step_].duration);
+//            tone_timer_ += notes_[tone_step_].duration + notes_[tone_step_].pause;
+//            tone_step_++;
+//        }
     }
 
     // Stop playing

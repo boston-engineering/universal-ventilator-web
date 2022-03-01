@@ -22,7 +22,7 @@ static void on_startup_confirm_button(lv_event_t* evt)
     // Arm the speaker so it talks to LVGL on mute/unmute
     control_setup_alarm_cb();
 
-    update_readout_timer = lv_timer_create(loop_simulate_readouts, SENSOR_POLL_INTERVAL, &main_screen);
+    update_readout_timer = lv_timer_create(loop_test_readout, SENSOR_POLL_INTERVAL, &main_screen);
 }
 
 static void setup_screens()

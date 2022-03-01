@@ -64,9 +64,6 @@ public:
 private:
     Stepper stepper;
 
-    // Feedback
-    AMS_AS5048B stepper_fb;
-
     // Prev. value of angle sensor.
     // Used to detect movement.
     double prev_position;

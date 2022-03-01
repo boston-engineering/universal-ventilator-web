@@ -5,12 +5,12 @@
  * 
  */
 
+#include <cstdio>
 #include "speaker.h"
+#include "lvgl/src/hal/lv_hal.h"
 
 void Speaker::begin()
 {
-    // snooze_button_.begin();
-    pinMode(speaker_pin_, OUTPUT);
 }
 
 void Speaker::play(const AlarmLevel& alarm_level)
@@ -36,7 +36,7 @@ void Speaker::update(const AlarmLevel& alarm_level)
         toggleSnooze();
     }
     // check if snooze time is up
-    if (snoozed_ && millis() - snooze_time_ > kSnoozeTime) {
+    if (snoozed_ && lv_tick_get() - snooze_time_ > kSnoozeTime) {
         snoozed_ = false;
         if (snooze_complete_cb) {
             snooze_complete_cb();
@@ -62,13 +62,13 @@ void Speaker::toggleSnooze()
     if (snoozed_) {
         snoozed_ = false;
 
-        Serial.println("Snooze false");
+        printf("Snooze false\n");
     }
     else {
         snoozed_ = true;
 
-        snooze_time_ = millis();
-        Serial.println("Snooze true");
+        snooze_time_ = lv_tick_get();
+        printf("Snooze true\n");
     }
 }
 

@@ -7,6 +7,7 @@
  */
 
 #include "speaker.h"
+#include <string>
 
 /** 
  * Alarm
@@ -16,7 +17,7 @@ class Alarm {
 public:
     Alarm(){};
 
-    Alarm(String  default_text, const int& min_bad_to_trigger,
+    Alarm(std::string default_text, const int& min_bad_to_trigger,
           const int& min_good_to_clear, const AlarmLevel& alarm_level);
 
     // Reset to default state
@@ -31,13 +32,13 @@ public:
     inline const bool& isON() const { return on_; }
 
     // Get the text of this alarm
-    inline String text() const { return text_; }
+    inline std::string text() const { return text_; }
 
     // Get the alarm level of this alarm
     inline AlarmLevel alarmLevel() const { return alarm_level_; }
 
 private:
-    String text_;
+    std::string text_;
     uint8_t min_bad_to_trigger_;
     uint8_t min_good_to_clear_;
     AlarmLevel alarm_level_;
@@ -74,7 +75,7 @@ class AlarmManager {
 
 public:
     AlarmManager(const int& speaker_pin,
-                 unsigned long const* cycle_count) : speaker_(speaker_pin),
+                 uint32_t const* cycle_count) : speaker_(speaker_pin),
                                                      cycle_count_(cycle_count)
     {
         alarms_[HIGH_PRESSU] = Alarm("HIGH PRESSURE", 1, 2, EMERGENCY);
@@ -167,7 +168,7 @@ public:
     void disable_snooze();
 
     // Get text to display
-    String getText() const;
+    std::string getText() const;
 
     // Get number of alarms that are ON
     int numON() const;
@@ -181,7 +182,7 @@ private:
     Speaker speaker_;
 
     Alarm alarms_[NUM_ALARMS];
-    unsigned long const* cycle_count_;
+    uint32_t const* cycle_count_;
 
     // Get highest priority level of the alarms that are ON
     AlarmLevel getHighestLevel() const;

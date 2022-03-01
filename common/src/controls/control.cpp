@@ -1,4 +1,5 @@
 #include <random>
+#include <string>
 #include "control.h"
 #include "waveform.h"
 #include "../display/screens/screen.h"
@@ -36,6 +37,9 @@ Machine machine(States::ST_STARTUP, &actuator, &waveform, &gauge_sensor, &alarm_
 
 // Bool to keep track of the alert box
 static bool alert_box_already_visible = false;
+
+std::default_random_engine generator;
+std::uniform_int_distribution<int> distribution(0, 100);
 
 void loop_test_readout(lv_timer_t* timer)
 {
@@ -79,7 +83,7 @@ void loop_test_readout(lv_timer_t* timer)
 
     // Poll gauge sensor, add point to graph and update readout obj.
     // Will not refresh until explicitly told
-    static double cur_pressure = -2;
+    static double cur_pressure = 0;
     screen->get_chart(CHART_IDX_PRESSURE)->add_data_point(cur_pressure);
     set_readout(AdjValueType::CUR_PRESSURE, cur_pressure);
     screen->get_chart(CHART_IDX_FLOW)->add_data_point(cur_pressure);
@@ -88,7 +92,7 @@ void loop_test_readout(lv_timer_t* timer)
     double rand = (distribution(generator) / 100.0);
     cur_pressure += rand;
     if (cur_pressure > 40) {
-        cur_pressure -= 42;
+        cur_pressure -= 40;
     }
 
     // Poll vT sensor, add point to graph and update readout obj.
@@ -121,6 +125,76 @@ void loop_test_readout(lv_timer_t* timer)
     screen->try_refresh_charts();
 }
 
+void loop_update_dummy_data(lv_timer_t* timer)
+{
+    static bool timer_delay_complete = false;
+
+    // Internal timers, components might have different refresh times
+    static uint32_t last_readout_refresh = 0;
+
+    // Don't poll the sensors before we're sure everything's had a chance to init
+    if (!timer_delay_complete && (lv_tick_get() >= SENSOR_POLL_STARTUP_DELAY)) {
+        timer_delay_complete = true;
+    }
+    if (!timer_delay_complete) {
+        LV_LOG_TRACE("Timer is not ready yet, returning (%d)", millis());
+        return;
+    }
+
+    // If verbose data polling is off, polling / updates won't be done if the state machine is off
+    // If in debug screen mode, it won't be done if we're in startup state either
+#if VERBOSE_DATA_POLLING == 0
+    States cur_state = control_get_state();
+    if (cur_state == States::ST_OFF || (!ENABLE_CONTROL && cur_state == States::ST_STARTUP)) {
+        return;
+    }
+#endif
+
+    // Main screen, passed through via user data in main.cpp
+    auto* screen = static_cast<MainScreen*>(timer->user_data);
+
+    // Check for errors
+    handle_alerts();
+
+    // Poll gauge sensor, add point to graph and update readout obj.
+    // Will not refresh until explicitly told
+    double cur_pressure = control_get_gauge_pressure();
+    screen->get_chart(CHART_IDX_PRESSURE)->add_data_point(cur_pressure);
+    set_readout(AdjValueType::CUR_PRESSURE, cur_pressure);
+
+    // Poll sensors, update readout obj.
+    // Will not refresh until explicitly told
+    // Waveform parameters
+    waveform_params* p_wave_params = control_get_waveform_params();
+    set_readout(AdjValueType::TIDAL_VOLUME, p_wave_params->m_tidal_volume);
+    set_readout(AdjValueType::RESPIRATION_RATE, p_wave_params->m_rr);
+    set_readout(AdjValueType::IE_RATIO_LEFT, p_wave_params->m_ie_i);
+    set_readout(AdjValueType::IE_RATIO_RIGHT, p_wave_params->m_ie_e);
+    set_readout(AdjValueType::PEEP, p_wave_params->m_peep);
+    set_readout(AdjValueType::PIP, p_wave_params->m_pip);
+    set_readout(AdjValueType::PLAT_PRESSURE, p_wave_params->m_plateau_press);
+
+    double cur_flow = diff_sensor.get_flow(units_flow::lpm, true, Order_type::third);
+    screen->get_chart(CHART_IDX_FLOW)->add_data_point(cur_flow);
+    set_readout(AdjValueType::FLOW, cur_flow);
+
+    // TODO add more sensors HERE
+
+    // Check to see if it's time to refresh the readout boxes
+    if (has_time_elapsed(&last_readout_refresh, READOUT_REFRESH_INTERVAL)) {
+        // Refresh all of the readout labels
+        for (auto& value : adjustable_values) {
+            if (!value.is_dirty()) {
+                continue;
+            }
+            value.refresh_readout();
+            value.clear_dirty();
+        }
+    }
+
+    screen->try_refresh_charts();
+}
+
 void loop_update_readouts(lv_timer_t* timer)
 {
     static bool timer_delay_complete = false;
@@ -129,7 +203,7 @@ void loop_update_readouts(lv_timer_t* timer)
     static uint32_t last_readout_refresh = 0;
 
     // Don't poll the sensors before we're sure everything's had a chance to init
-    if (!timer_delay_complete && (millis() >= SENSOR_POLL_STARTUP_DELAY)) {
+    if (!timer_delay_complete && (lv_tick_get() >= SENSOR_POLL_STARTUP_DELAY)) {
         timer_delay_complete = true;
     }
     if (!timer_delay_complete) {
@@ -213,7 +287,7 @@ void handle_alerts()
         last_alarm_count = alarm_count;
 
         Alarm* alarm_arr = control_get_alarm_list();
-        String alarm_strings[NUM_ALARMS];
+        std::string alarm_strings[NUM_ALARMS];
         uint16_t buf_size = 0;
         uint16_t alarm_list_idx = 0;
         for (uint16_t i = 0; i < NUM_ALARMS; i++) {
@@ -352,9 +426,6 @@ void control_handler()
 {
     static bool ledOn = false;
 
-    // LED to visually show state machine is running.
-    digitalWrite(DEBUG_LED, ledOn);
-
     // Toggle the LED.
     ledOn = !ledOn;
 
@@ -464,7 +535,6 @@ int8_t control_get_actuator_position_raw(double& angle)
  */
 void control_eeprom_write_default()
 {
-    storage.load_defaults();
 }
 
 /* Set the current angular position of the actuator as home
@@ -476,9 +546,6 @@ void control_zero_actuator_position()
 
     // Zero the angle sensor and write the value to the EEPROM
     settings.actuator_home_offset_adc_counts = actuator.set_current_position_as_zero();
-
-    // Store this value to the eeprom.
-    storage.set_settings(settings);
 }
 
 void control_write_ventilator_params()
@@ -494,7 +561,6 @@ void control_write_ventilator_params()
     settings.ie_ratio_left = get_control_target(IE_RATIO_LEFT);
     settings.ie_ratio_right = get_control_target(IE_RATIO_RIGHT);
 
-    storage.set_settings(settings);
 }
 
 void control_get_serial(char* serial_buffer)
@@ -540,7 +606,7 @@ void control_display_storage()
 
 bool control_is_crc_ok()
 {
-    return storage.is_crc_ok();
+    return true;
 }
 
 double control_get_degrees_to_volume(C_Stat compliance)
@@ -620,7 +686,7 @@ int16_t control_get_alarm_count()
     return alarm_manager.numON();
 }
 
-String control_get_alarm_text()
+std::string control_get_alarm_text()
 {
     return (alarm_manager.getText());
 }

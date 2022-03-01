@@ -18,6 +18,11 @@ void init_adjustable_values();
  */
 void loop_test_readout(lv_timer_t* timer);
 /**
+ * Function that consumes canned data instead of live sensor or test values
+ * @param timer The LVGL timer that controls this loop. Contains user data with a screen pointer for the cur screen.
+ */
+void loop_update_dummy_data(lv_timer_t* timer);
+/**
  * Timer function to poll sensors and update values accordingly.
  * This should not be called manually under normal circumstances
  * @param timer The LVGL timer that controls this loop. Contains user data with a screen pointer for the cur screen.
@@ -47,6 +52,9 @@ double get_readout(AdjValueType type);
  * @param new_value The new value to be set
  */
 void control_update_waveform_param(AdjValueType type, float new_value);
+
+void control_handler();
+void actuator_handler();
 
 void control_init();
 void control_service();

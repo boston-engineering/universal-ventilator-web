@@ -184,7 +184,7 @@ void setup_adjustable_readout(AdjValueType type, lv_obj_t* parent_container, con
     if (settings.unit) {
         value_unit_label = lv_label_create(value_container);
         lv_obj_add_style(value_unit_label, STYLE_PTR_CM(READOUT_VALUE_UNIT_TEXT), LV_PART_MAIN);
-        lv_label_set_text_fmt(value_unit_label, settings.unit);
+        lv_label_set_text_fmt(value_unit_label, "%s", settings.unit);
     }
 
 #if DEBUG_BORDER_READOUTS
@@ -329,7 +329,7 @@ void setup_ie_readout()
 static void ie_label_text(lv_obj_t* label, double val)
 {
     if (is_whole(val)) {
-        lv_label_set_text_fmt(label, "%ld", (uint32_t) val);
+        lv_label_set_text_fmt(label, "%u", (uint32_t) val);
     }
     else {
         lv_label_set_text_fmt(label, "%.1f", val);
@@ -695,7 +695,7 @@ lv_obj_t* add_settings_button(const char* title, lv_obj_t* parent)
     lv_obj_set_style_pad_bottom(button, 4 px, LV_PART_MAIN);
 
     lv_obj_t* label = lv_label_create(button);
-    lv_label_set_text_fmt(label, title);
+    lv_label_set_text_fmt(label, "%s", title);
     lv_obj_add_style(label, STYLE_PTR_CM(OPTION_BUTTON_TEXT), LV_PART_MAIN);
     lv_obj_align_to(label, button, LV_ALIGN_CENTER, 0, 0);
     lv_obj_center(label);
@@ -892,7 +892,7 @@ static void control_press_cb(AdjustableValue* this_ptr, lv_event_t* evt)
             val += settings.step;
             break;
         default:
-            Serial.println(data->type);
+            printf("%d\n", data->type);
             return;
     }
 
