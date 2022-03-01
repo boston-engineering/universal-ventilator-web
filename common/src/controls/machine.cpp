@@ -21,6 +21,8 @@ const char* state_string[] =
 
 Machine::Machine(States st, Actuator* act, Waveform* wave, PressureSensor* gp, AlarmManager* al, uint32_t* cc)
 {
+    gp->load_dummy_data();
+
     p_actuator = act;
     state = st;
 

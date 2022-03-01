@@ -158,3 +158,7 @@ void PressureSensor::determine_units_flow(double& flow, Units_flow units)
         break;
     }
 }
+
+void PressureSensor::load_dummy_data() {
+    fake_data = load_fake_data();
+}

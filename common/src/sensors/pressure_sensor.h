@@ -2,6 +2,8 @@
 #define PRESSURE_SENSOR
 
 #include <cstdint>
+#include <vector>
+#include "../utilities/util.h"
 #include "../uvent_conf.h"
 
 typedef enum class units_pressure {
@@ -84,6 +86,8 @@ public:
     // zero_type: depends on the specific sensor in use.
     void calculate_zero(int32_t& pressure_offset_adc_counts, Zero_type zero_type);
 
+    void load_dummy_data();
+
 private:
     // CONVERSION TABLE
     // pressure
@@ -151,6 +155,10 @@ private:
     // flow: the flow measured in units lpm
     // units: units of measurement requested
     void determine_units_flow(double& flow, Units_flow units);
+
+
+    // Dummy Data vector for doing simulations
+    std::vector<FakeData> fake_data;
 };
 
 #endif// PRESSURE_SENSOR

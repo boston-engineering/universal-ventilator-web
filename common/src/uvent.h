@@ -7,15 +7,6 @@
 #include "sensors/pressure_sensor.h"
 #include "display/main_display.h"
 
-struct FakeData {
-    double time_step;
-    double flow;
-    double delivered_vt;
-    double lung_vol;
-    double lung_pressure;
-    double pressure_premask;
-};
-
 extern MainScreen main_screen;
 extern StartupScreen startup_screen;
 // Timers

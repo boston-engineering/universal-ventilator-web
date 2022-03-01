@@ -15,9 +15,6 @@
 #define SDL_MAIN_HANDLED /*To fix SDL's "undefined reference to WinMain" issue*/
 
 #include <SDL2/SDL.h>
-#include <fstream>
-#include <iostream>
-#include <sstream>
 #include "lvgl/lvgl.h"
 #include "lv_drivers/display/monitor.h"
 #include "lv_drivers/display/fbdev.h"
@@ -44,8 +41,6 @@ static int tick_thread(void *data);
 static int control_us_timer(void *data);
 
 static int actuator_us_timer(void *data);
-
-std::vector<FakeData> load_fake_data();
 
 /**********************
  *  STATIC VARIABLES
@@ -183,53 +178,6 @@ static void hal_init() {
     lv_obj_t *cursor_obj = lv_img_create(lv_scr_act()); /*Create an image object for the cursor */
     lv_img_set_src(cursor_obj, &mouse_cursor_icon);           /*Set the image source*/
     lv_indev_set_cursor(mouse_indev, cursor_obj);             /*Connect the image  object to the driver*/
-}
-
-std::vector<FakeData> load_fake_data() {
-    std::vector<FakeData> data;
-    std::ifstream file("../../common/data/ScopeData.csv");
-
-    if(!file) {
-        return data;
-    }
-
-    std::string line;
-    bool first = true;
-    while(std::getline(file, line)) {
-        // Exclude the header of the csv
-        if(first) {
-            first = false;
-            continue;
-        }
-
-        FakeData data_point{};
-        uint offset = 0;
-        std::string token;
-        std::istringstream token_stream(line);
-        while(std::getline(token_stream, token, ',')) {
-            try{
-                double val = std::stod(token);
-                // Since the struct is just POD, shove in via an offset
-                *((double*) (((char *) &data_point) + (sizeof(double) * offset))) = val;
-            }catch(const std::invalid_argument&){
-                break;
-            }catch(const std::out_of_range&){
-                break;
-            }
-            offset++;
-        }
-
-        // Skip if we don't have enough data in the line
-        if(offset < 6) {
-            continue;
-        }
-
-        data.push_back(data_point);
-    }
-
-    file.close();
-    std::cout << "File Closed" << std::endl;
-    return data;
 }
 
 /**
